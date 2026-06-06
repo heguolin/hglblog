@@ -16,7 +16,7 @@ interface ListResponse {
 @Injectable()
 export class ImageHostService {
   private readonly logger = new Logger(ImageHostService.name);
-  private readonly baseUrl = "http://img.hgl123.icu";
+  private readonly baseUrl = "https://img.hgl123.icu";
   private readonly uploadToken: string;
   private readonly username: string;
   private readonly password: string;

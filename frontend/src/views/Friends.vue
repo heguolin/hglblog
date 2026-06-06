@@ -21,7 +21,7 @@ const copied = ref(false);
 const copyTemplate = `名称：HGL
 简介：全栈开发者 · 二次元爱好者
 链接：https://hgl123.icu
-头像：http://img.hgl123.icu/i/1780730938101-EUvDVVgB.webp`;
+头像：https://img.hgl123.icu/i/1780730938101-EUvDVVgB.webp`;
 
 async function loadFriends() {
   loading.value = true;

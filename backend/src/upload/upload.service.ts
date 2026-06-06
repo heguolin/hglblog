@@ -21,7 +21,7 @@ interface ImageHostResponse {
 export class UploadService {
   private readonly logger = new Logger(UploadService.name);
   private readonly token: string;
-  private readonly uploadUrl = "http://img.hgl123.icu/api/upload";
+  private readonly uploadUrl = "https://img.hgl123.icu/api/upload";
 
   constructor(configService: ConfigService) {
     this.token = configService.get<string>("IMG_UPLOAD_TOKEN") ?? "";

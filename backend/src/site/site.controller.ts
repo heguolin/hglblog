@@ -30,6 +30,12 @@ export class SiteController {
     return { images: urls };
   }
 
+  /** ICP 备案号 */
+  @Get("icp")
+  getIcp() {
+    return { icp: process.env.ICP_BEIAN || "" };
+  }
+
   // ========== 需 ADMIN 认证 ==========
   @UseGuards(AuthGuard("jwt"), RolesGuard)
   @Roles("ADMIN")

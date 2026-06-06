@@ -29,6 +29,7 @@ services:
       IMG_UPLOAD_TOKEN: ${IMG_UPLOAD_TOKEN}
       IMG_USERNAME: ${IMG_USERNAME}
       IMG_PASSWORD: ${IMG_PASSWORD}
+      ICP_BEIAN: ${ICP_BEIAN}
 
 volumes:
   postgres_data:

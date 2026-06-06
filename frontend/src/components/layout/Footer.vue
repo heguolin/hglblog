@@ -9,6 +9,7 @@ const startDate = new Date("2025-01-01");
 const daysRunning = ref(0);
 
 const isLoggedIn = ref(!!localStorage.getItem("token"));
+const icpBeian = ref("");
 
 function handleEntry() {
   if (isLoggedIn.value) {
@@ -18,8 +19,13 @@ function handleEntry() {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   daysRunning.value = Math.floor((Date.now() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+  try {
+    const res = await fetch("/api/site/icp");
+    const data = await res.json();
+    icpBeian.value = data.icp || "";
+  } catch { /* ignore */ }
 });
 </script>
 
@@ -54,6 +60,11 @@ onMounted(() => {
       <!-- 版权 -->
       <p class="text-xs text-text-muted">
         © {{ new Date().getFullYear() }} HGL Blog · Powered by Vue & NestJS
+      </p>
+
+      <!-- ICP 备案 -->
+      <p v-if="icpBeian" class="text-xs text-text-muted">
+        <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" class="hover:text-text-secondary transition-colors">{{ icpBeian }}</a>
       </p>
     </div>
   </footer>

@@ -3,7 +3,6 @@
 基于 **Vue 3 + NestJS** 的全栈个人博客系统。极致毛玻璃（Glassmorphism）+ Bento Grid 布局 + 二次元视觉特效，支持文章/杂谈/照片墙/友链/管理后台。
 
 > 在线地址：[https://hgl123.icu](https://hgl123.icu)
-> 原型参考：[xinghuisama.top](https://www.xinghuisama.top/)
 
 ---
 

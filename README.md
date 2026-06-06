@@ -217,23 +217,54 @@ PUT    /api/auth/profile                       # 更新管理员头像
 
 ## 部署
 
-详见 `二次元毛玻璃博客开发指南.md` §阶段十一。简要流程：
+### 首次部署
 
 ```bash
-# 服务器
-apt install docker.io nginx certbot python3-certbot-nginx git
+# 1. SSH 到服务器
+ssh root@your-server-ip
 
-# 后端
-docker compose up -d --build
+# 2. 服务器初始化（安装 Docker / Nginx / Certbot / Node.js）
+cd /opt && git clone https://github.com/heguolin/hglblog.git
+cd hglblog
+bash deploy/init-server.sh
 
-# 前端
-cd frontend && npm run build
-scp -r dist/* root@服务器:/var/www/blog/
+# 3. 配置生产环境变量（替换 TODO 为真实值）
+cp backend/.env.production backend/.env
+nano backend/.env
+# 必须替换:
+#   TODO_REPLACE_DB_PASSWORD    — 数据库密码
+#   TODO_REPLACE_JWT_SECRET     — openssl rand -hex 32 生成
+#   TODO_REPLACE_IMG_UPLOAD_TOKEN — 图床 API Token
+#   TODO_REPLACE_IMG_USERNAME   — 图床登录名
+#   TODO_REPLACE_IMG_PASSWORD   — 图床登录密码
 
-# Nginx
-# /          → /var/www/blog (SPA try_files)
-# /api/*     → proxy_pass http://127.0.0.1:4000
-certbot --nginx -d hgl123.icu
+# 4. 一键部署
+bash deploy/deploy.sh
+
+# 5. 申请 SSL 证书
+sudo certbot --nginx -d hgl123.icu
+
+# 6. 登录后台改密码
+# https://hgl123.icu/admin/login  默认 admin / admin123
+```
+
+### 更新部署
+
+```bash
+cd /opt/hglblog
+git pull origin main
+bash deploy/deploy.sh
+```
+
+### 日常维护
+
+```bash
+docker compose logs -f backend          # 查看后端日志
+docker compose restart backend           # 重启后端
+docker compose exec backend npx prisma studio  # 数据库 GUI
+docker compose exec postgres pg_dump -U postgres blog > backup.sql  # 备份数据库
+docker compose exec -T postgres psql -U postgres blog < backup.sql  # 还原数据库
+sudo certbot renew --dry-run             # 测试 SSL 续期
 ```
 
 ## 许可证

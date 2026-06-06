@@ -1,0 +1,128 @@
+@import "tailwindcss";
+
+/* ====== 全站统一设计规范 ======
+   原型参考: xinghuisama.top
+   配色: CLAUDE.md 自有强调色系
+   卡片: 圆角 1rem / 毛玻璃两层 / hover 上浮 4px
+   间距: page py-6 lg:py-10 / card p-5 md:p-6 / grid gap-5
+   排版: subtitle 标签 11px tracking / title 16-18px bold / body 13px / meta 12px
+*/
+
+@theme {
+  /* 强调色（自有色系） */
+  --color-accent-pink: #ff6b9d;
+  --color-accent-purple: #c084fc;
+  --color-accent-blue: #60a5fa;
+  --color-accent-cyan: #22d3ee;
+  /* 背景渐变 */
+  --color-bg-start: #0f0c29;
+  --color-bg-mid1: #302b63;
+  --color-bg-mid2: #24243e;
+  --color-bg-end: #1a1a2e;
+  /* 文字 */
+  --color-text-primary: #ffffff;
+  --color-text-secondary: rgba(255, 255, 255, 0.7);
+  --color-text-muted: rgba(255, 255, 255, 0.4);
+  /* 毛玻璃 */
+  --glass-bg: rgba(255, 255, 255, 0.06);
+  --glass-bg-strong: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-border-strong: rgba(255, 255, 255, 0.15);
+  --glass-blur: 20px;
+  --glass-blur-strong: 30px;
+  /* 圆角 */
+  --radius-card: 1rem;
+  --radius-lg: 0.75rem;
+  --radius-md: 0.5rem;
+  --radius-full: 9999px;
+}
+
+/* ====== 毛玻璃卡片 ====== */
+.glass {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-strong {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* ====== 卡片交互 ====== */
+.card-hover {
+  border-radius: 1rem;
+  overflow: hidden;
+  box-sizing: border-box;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+/* ====== 全站排版工具类 ====== */
+.page-container {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 1280px;
+  padding: 1.5rem 1rem;
+}
+@media (min-width: 768px) { .page-container { padding-inline: 1.5rem; } }
+@media (min-width: 1024px) { .page-container { padding-inline: 2rem; padding-block: 2.5rem; } }
+
+/* 页面标题伴生小标签 */
+.page-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #22d3ee;
+  margin-bottom: 0.25rem;
+}
+
+/* 卡片内标签 */
+.card-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* ====== 基础重置 ====== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  color: #ffffff;
+  background: transparent; /* 轮播图由 Background.vue 出，此处不能有颜色遮挡 */
+  font-family: "Inter", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+#app {
+  min-height: 100vh;
+  background: transparent;
+}
+
+/* 滚动条 */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.25); }
+
+/* 毛玻璃降级：低端设备减少 blur */
+@media (prefers-reduced-motion: reduce) {
+  .glass, .glass-strong {
+    backdrop-filter: blur(10px) saturate(120%);
+    -webkit-backdrop-filter: blur(10px) saturate(120%);
+  }
+}

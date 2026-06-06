@@ -1,0 +1,32 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: blog
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:4000:4000"
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      DATABASE_URL: postgresql://postgres:${DB_PASSWORD}@postgres:5432/blog?schema=public
+      JWT_SECRET: ${JWT_SECRET}
+      IMG_UPLOAD_TOKEN: ${IMG_UPLOAD_TOKEN}
+      IMG_USERNAME: ${IMG_USERNAME}
+      IMG_PASSWORD: ${IMG_PASSWORD}
+
+volumes:
+  postgres_data:

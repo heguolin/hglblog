@@ -1,0 +1,159 @@
+// 完整数据库模型 — 10 张表
+// 参考：二次元毛玻璃博客开发指南.md §四.4.2
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ========== 用户 ==========
+model User {
+  id        Int       @id @default(autoincrement())
+  email     String    @unique
+  username  String    @unique
+  password  String    // bcrypt 哈希
+  avatar    String?   // 头像 URL（图床）
+  bio       String?   // 个人简介
+  role      String    @default("USER") // ADMIN | USER
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  posts    Post[]
+  chatters Chatter[]
+
+  @@map("users")
+}
+
+// ========== 文章分类 ==========
+model Category {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  slug  String @unique
+  icon  String?
+  color String?
+
+  posts Post[]
+
+  @@map("categories")
+}
+
+// ========== 标签 ==========
+model Tag {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  slug  String @unique
+  color String?
+
+  posts PostTag[]
+
+  @@map("tags")
+}
+
+// ========== 文章 ==========
+model Post {
+  id          Int       @id @default(autoincrement())
+  title       String
+  slug        String    @unique
+  content     String    // Markdown
+  excerpt     String?   // 摘要
+  coverImage  String?   @map("cover_image") // 封面 URL（图床）
+  published   Boolean   @default(false)
+  pinned      Boolean   @default(false)
+  viewCount   Int       @default(0) @map("view_count")
+  likeCount   Int       @default(0) @map("like_count")
+  readingTime Int?      @map("reading_time") // 预估阅读分钟
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  authorId   Int       @map("author_id")
+  author     User      @relation(fields: [authorId], references: [id])
+  categoryId Int?      @map("category_id")
+  category   Category? @relation(fields: [categoryId], references: [id])
+  tags       PostTag[] // 多对多
+
+  @@map("posts")
+}
+
+// ========== 文章-标签关联 ==========
+model PostTag {
+  postId Int @map("post_id")
+  tagId  Int @map("tag_id")
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag    Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+  @@map("post_tags")
+}
+
+// ========== 杂谈 ==========
+model Chatter {
+  id         Int      @id @default(autoincrement())
+  title      String
+  content    String
+  mood       String?  // emoji 表情
+  coverImage String?  @map("cover_image") // 封面 URL（图床）
+  images     String[] // 多图 URL 数组（图床）
+  tags       String[] // 标签数组
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  authorId Int  @map("author_id")
+  author   User @relation(fields: [authorId], references: [id])
+
+  @@map("chatters")
+}
+
+// ========== 相册 ==========
+model Album {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  coverImage  String?  @map("cover_image") // 封面 URL（图床）
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  photos Photo[]
+
+  @@map("albums")
+}
+
+// ========== 照片 ==========
+model Photo {
+  id        Int      @id @default(autoincrement())
+  url       String   // 原图 URL（图床）
+  thumbnail String?  // 缩略图 URL（图床）
+  title     String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  albumId Int   @map("album_id")
+  album   Album @relation(fields: [albumId], references: [id], onDelete: Cascade)
+
+  @@map("photos")
+}
+
+// ========== 友链 ==========
+model Friend {
+  id          Int      @id @default(autoincrement())
+  name        String
+  url         String
+  avatar      String?  // 头像 URL（图床）
+  description String?
+  approved    Boolean  @default(false)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("friends")
+}
+
+// ========== 站点配置 ==========
+model SiteConfig {
+  id    Int    @id @default(autoincrement())
+  key   String @unique
+  value String // JSON string
+
+  @@map("site_configs")
+}

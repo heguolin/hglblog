@@ -47,14 +47,7 @@ echo "🗄️  运行数据库迁移..."
 sleep 3  # 等 backend 容器完全启动
 docker compose exec -T backend npx prisma migrate deploy || echo "⚠️  迁移可能已是最新"
 
-# --- 5. 首次部署时播种数据 ---
-if [ ! -f .seeded ]; then
-  echo "🌱 首次部署，播种数据..."
-  docker compose exec -T backend npx tsx prisma/seed.ts && touch .seeded
-  echo "   ⚠️  默认管理员: admin / admin123 — 请立即修改密码！"
-fi
-
-# --- 6. 更新 Nginx 配置 + 重载 ---
+# --- 5. 更新 Nginx 配置 + 重载 ---
 echo "🔄 更新 Nginx..."
 sudo cp deploy/nginx.conf /etc/nginx/sites-available/hglblog
 sudo ln -sf /etc/nginx/sites-available/hglblog /etc/nginx/sites-enabled/

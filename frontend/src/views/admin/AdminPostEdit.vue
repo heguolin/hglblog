@@ -71,7 +71,7 @@ async function loadPost() {
   if (!isEdit.value) return;
   try {
     const id = Number(route.params.id);
-    const { data } = await client.get(`/posts/${id}`);
+    const { data } = await client.get(`/posts/id/${id}`);
     const post = data;
     title.value = post.title;
     slug.value = post.slug;
@@ -134,29 +134,30 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="max-w-[1400px] mx-auto">
-    <div class="flex items-center justify-between mb-6">
+  <!-- 整体 flex 列撑满视口高度，减顶栏 -->
+  <div class="max-w-[1400px] mx-auto h-[calc(100vh-100px)] flex flex-col">
+    <div class="flex items-center justify-between mb-4 shrink-0">
       <h1 class="text-2xl font-bold text-white">{{ isEdit ? '✏️ 编辑文章' : '✏️ 新建文章' }}</h1>
       <router-link to="/admin/posts" class="text-text-muted hover:text-white text-sm transition-colors">← 返回列表</router-link>
     </div>
 
-    <p v-if="error" class="text-accent-pink text-sm mb-4">{{ error }}</p>
-    <p v-if="success" class="text-green-400 text-sm mb-4">{{ success }}</p>
+    <p v-if="error" class="text-accent-pink text-sm mb-2 shrink-0">{{ error }}</p>
+    <p v-if="success" class="text-green-400 text-sm mb-2 shrink-0">{{ success }}</p>
 
-    <div class="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
+    <!-- 主两栏，flex-1 撑满剩余高度 -->
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 flex-1 min-h-0">
       <!-- 左列：编辑器 -->
-      <div class="space-y-4 min-w-0">
-        <input v-model="title" @input="autoSlug" type="text" placeholder="文章标题" class="w-full glass rounded-xl px-4 py-3 text-white text-lg font-bold outline-none border border-white/10 focus:border-accent-cyan/50 transition-colors placeholder:text-text-muted" />
-        <input v-model="slug" type="text" placeholder="url-slug" class="w-full glass rounded-xl px-4 py-3 text-white text-sm outline-none border border-white/10 focus:border-accent-cyan/50 transition-colors placeholder:text-text-muted font-mono" />
+      <div class="flex flex-col gap-3 min-h-0">
+        <input v-model="title" @input="autoSlug" type="text" placeholder="文章标题" class="w-full glass rounded-xl px-4 py-3 text-white text-lg font-bold outline-none border border-white/10 focus:border-accent-cyan/50 transition-colors placeholder:text-text-muted shrink-0" />
+        <input v-model="slug" type="text" placeholder="url-slug" class="w-full glass rounded-xl px-4 py-3 text-white text-sm outline-none border border-white/10 focus:border-accent-cyan/50 transition-colors placeholder:text-text-muted font-mono shrink-0" />
 
-        <!-- md-editor-v3 Markdown 编辑器 -->
+        <!-- md-editor-v3 Markdown 编辑器，撑满剩余高度 -->
         <MdEditor
           v-model="content"
           language="en-US"
           :toolbars="['bold', 'italic', 'strikeThrough', 0, 'title', 1, 'quote', 'unorderedList', 'orderedList', 'code', 'codeRow', 'link', 'image', 'table', 0, 'preview', 'fullscreen']"
           :preview-theme="'github-dark'"
-          class="rounded-xl overflow-hidden border border-white/10"
-          style="min-height:500px"
+          class="rounded-xl overflow-hidden border border-white/10 flex-1"
         />
       </div>
 

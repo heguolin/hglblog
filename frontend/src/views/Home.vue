@@ -22,7 +22,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-[1280px] px-4 md:px-6 lg:px-8 pt-10 md:pt-14 lg:pt-20 pb-6 lg:pb-10">
+  <div class="mx-auto w-full max-w-[1280px] px-4 md:px-6 lg:px-8 py-6 lg:py-10">
     <!-- Bento Grid — 桌面 grid-cols-12、平板 grid-cols-6、手机 grid-cols-1 -->
     <div class="grid grid-cols-1 md:grid-cols-6 lg:grid-cols-12 gap-5 lg:gap-6">
       <!-- Row 1: ProfileCard(5)  |  MusicCard(7)

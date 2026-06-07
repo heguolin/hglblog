@@ -88,6 +88,11 @@ const routes: RouteRecordRaw[] = [
         component: () => import("@/views/admin/AdminAlbums.vue"),
       },
       {
+        path: "comments",
+        name: "AdminComments",
+        component: () => import("@/views/admin/AdminComments.vue"),
+      },
+      {
         path: "friends",
         name: "AdminFriends",
         component: () => import("@/views/admin/AdminFriends.vue"),

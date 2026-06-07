@@ -54,6 +54,16 @@ export class PostsService {
     return posts.map((p) => ({ ...p, tags: p.tags.map((pt) => pt.tag) }));
   }
 
+  /** 按数字 ID 查询（后台编辑用，不增加浏览计数） */
+  async findById(id: number) {
+    const post = await this.prisma.post.findUnique({
+      where: { id },
+      include: { category: true, tags: { include: { tag: true } }, author: { select: { id: true, username: true, avatar: true } } },
+    });
+    if (!post) throw new NotFoundException("文章不存在");
+    return { ...post, tags: post.tags.map((pt) => pt.tag) };
+  }
+
   async findBySlug(slug: string) {
     const post = await this.prisma.post.findUnique({
       where: { slug },

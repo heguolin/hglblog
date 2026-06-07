@@ -74,7 +74,28 @@ model Post {
   category   Category? @relation(fields: [categoryId], references: [id])
   tags       PostTag[] // 多对多
 
+  comments Comment[]
+
   @@map("posts")
+}
+
+// ========== 评论 ==========
+model Comment {
+  id        Int      @id @default(autoincrement())
+  content   String
+  nickname  String
+  email     String?  // 可选
+  website   String?  // 可选
+  status    String   @default("PENDING") // PENDING / APPROVED / REJECTED
+  createdAt DateTime @default(now()) @map("created_at")
+
+  postId    Int       @map("post_id")
+  post      Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  parentId  Int?      @map("parent_id")
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: SetNull)
+  replies   Comment[] @relation("CommentReplies")
+
+  @@map("comments")
 }
 
 // ========== 文章-标签关联 ==========

@@ -33,7 +33,7 @@ function getTransition(meta: Record<string, unknown>): string {
       <Sidebar />
 
       <!-- 右列：主内容 -->
-      <main class="min-w-0 flex flex-col">
+      <main class="min-w-0 flex flex-col" style="padding-top:80px">
         <div class="flex-1 pt-[72px] lg:pt-0">
           <router-view v-slot="{ Component, route }">
             <Transition

@@ -6,7 +6,7 @@ import MarkdownIt from "markdown-it";
 import hljs from "highlight.js";
 import { fetchPostBySlug, fetchPosts, type Post } from "@/api/posts";
 import { useSEO } from "@/composables/useSEO";
-import CommentWidget from "@/components/common/CommentWidget.vue";
+import CommentSection from "@/components/common/CommentSection.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -134,7 +134,8 @@ watch(() => route.params.slug, (newSlug) => {
     <!-- 文章内容 -->
     <div v-else-if="post" class="flex gap-8">
       <!-- 主内容区 -->
-      <article class="flex-1 min-w-0 max-w-3xl mx-auto lg:mr-auto lg:pr-56 flex flex-col gap-10">
+      <!-- 正文区：加宽到 max-w-4xl，减少右侧留白 -->
+      <article class="flex-1 min-w-0 max-w-4xl mx-auto lg:mx-0 lg:pr-52 flex flex-col gap-10">
         <!-- 标题区 -->
         <header>
           <!-- 分类 -->
@@ -223,12 +224,12 @@ watch(() => route.params.slug, (newSlug) => {
         </nav>
 
         <!-- 评论区 -->
-        <CommentWidget :path="`/posts/${post.slug}`" />
+        <CommentSection :post-id="post.id" />
       </article>
 
       <!-- 悬浮 TOC（桌面端固定视口右侧、垂直居中） -->
       <!-- 祖先链无 transform/filter/will-change，fixed 相对视口生效 -->
-      <aside class="hidden lg:block fixed right-4 lg:right-8 top-1/2 -translate-y-1/2 w-52 z-30">
+      <aside class="hidden lg:block fixed right-4 lg:right-6 top-1/2 -translate-y-1/2 w-44 z-30">
         <div class="glass rounded-xl p-5 max-h-[65vh] overflow-y-auto">
           <p class="text-white text-sm font-bold mb-4">📑 目录</p>
           <nav v-if="toc.length > 0" class="flex flex-col gap-1.5">
@@ -308,22 +309,29 @@ watch(() => route.params.slug, (newSlug) => {
   border-bottom-color: #60a5fa;
 }
 
-/* 代码块 */
+/* 代码块 — 深色实底 + 提 z-index 防粒子遮挡 */
 .post-content pre.hljs {
-  background: rgba(0, 0, 0, 0.4) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 17, 23, 0.94) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 0.75rem;
   padding: 1.2em 1.4em;
   overflow-x: auto;
   margin: 1.2em 0;
   line-height: 1.6;
   font-size: 13px;
+  position: relative;
+  z-index: 1;
 }
 
-/* highlight.js 代码高亮覆盖 */
+/* 代码文字基础亮度提高 */
+.post-content pre.hljs code {
+  color: #e2e8f0;
+}
+
+/* highlight.js 语法高亮 — 暗色主题高对比度 */
 .post-content .hljs-keyword { color: #c084fc; }
 .post-content .hljs-string { color: #22d3ee; }
-.post-content .hljs-comment { color: rgba(255,255,255,0.3); font-style: italic; }
+.post-content .hljs-comment { color: #6b7280; font-style: italic; }
 .post-content .hljs-function { color: #60a5fa; }
 .post-content .hljs-number { color: #ff6b9d; }
 .post-content .hljs-built_in { color: #22d3ee; }

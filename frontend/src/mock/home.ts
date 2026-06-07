@@ -70,7 +70,7 @@ export const mockSystem = {
     "Nginx",
     "Ubuntu",
   ],
-  startDate: "2025-01-01",
+  startDate: "2026-06-05",
 };
 
 export const mockTheme = {

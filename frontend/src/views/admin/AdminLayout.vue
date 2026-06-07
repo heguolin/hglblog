@@ -14,6 +14,7 @@ const menuItems = [
   { to: "/admin/posts", label: "📝 文章", icon: "📝" },
   { to: "/admin/chatters", label: "💬 杂谈", icon: "💬" },
   { to: "/admin/albums", label: "📷 相册", icon: "📷" },
+  { to: "/admin/comments", label: "💬 评论", icon: "💬" },
   { to: "/admin/friends", label: "🔗 友链", icon: "🔗" },
   { to: "/admin/settings", label: "⚙️ 设置", icon: "⚙️" },
 ];

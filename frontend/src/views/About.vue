@@ -2,7 +2,7 @@
 import { ref, onMounted, nextTick } from "vue";
 import gsap from "gsap";
 import client from "@/api/client";
-import CommentWidget from "@/components/common/CommentWidget.vue";
+import CommentSection from "@/components/common/CommentSection.vue";
 import { useSEO } from "@/composables/useSEO";
 useSEO("关于我");
 
@@ -99,7 +99,7 @@ onMounted(async () => {
         </div>
       </div>
       <!-- Waline 评论区 -->
-      <CommentWidget path="/about" />
+      <CommentSection :post-id="0" />
     </div>
 
     <!-- Tab: 研究动态 -->

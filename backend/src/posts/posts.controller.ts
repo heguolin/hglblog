@@ -23,6 +23,12 @@ export class PostsController {
     return this.postsService.findRecent(limit ? parseInt(limit, 10) : 5);
   }
 
+  /** 按数字 ID 查询单篇（后台编辑用） */
+  @Get("id/:id")
+  findById(@Param("id", ParseIntPipe) id: number) {
+    return this.postsService.findById(id);
+  }
+
   @Get(":slug")
   findBySlug(@Param("slug") slug: string) {
     return this.postsService.findBySlug(slug);

@@ -4,8 +4,7 @@ import { useRouter } from "vue-router";
 
 const router = useRouter();
 
-const techStack = ["Vue 3", "Tailwind v4", "GSAP", "NestJS", "Prisma", "PostgreSQL"];
-const startDate = new Date("2025-01-01");
+const startDate = new Date("2026-06-05");
 const daysRunning = ref(0);
 
 const isLoggedIn = ref(!!localStorage.getItem("token"));
@@ -32,17 +31,6 @@ onMounted(async () => {
 <template>
   <footer class="relative z-10 mt-auto">
     <div class="max-w-6xl mx-auto px-4 py-6 flex flex-col items-center gap-3 text-center">
-      <!-- 技术栈标签 -->
-      <div class="flex flex-wrap justify-center gap-2">
-        <span
-          v-for="tech in techStack"
-          :key="tech"
-          class="px-2 py-[2px] text-xs rounded-full bg-white/5 border border-white/10 text-text-muted"
-        >
-          {{ tech }}
-        </span>
-      </div>
-
       <!-- 状态行 -->
       <div class="text-xs text-text-muted flex flex-wrap justify-center gap-x-4 gap-y-1">
         <span>🟢 系统运行中</span>

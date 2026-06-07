@@ -13,6 +13,9 @@ import { SiteModule } from "./site/site.module";
 import { CategoriesModule } from "./categories/categories.module";
 import { TagsModule } from "./tags/tags.module";
 import { UploadModule } from "./upload/upload.module";
+import { CommentsModule } from "./comments/comments.module";
+import { MusicModule } from "./music/music.module";
+import { SystemModule } from "./system/system.module";
 
 @Module({
   imports: [
@@ -28,6 +31,9 @@ import { UploadModule } from "./upload/upload.module";
     CategoriesModule,
     TagsModule,
     UploadModule,
+    CommentsModule,
+    MusicModule,
+    SystemModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -151,7 +151,7 @@ export class ImageHostService {
     if (items.length === 0) return null;
     return items
       .filter((img) => !img.moderationStatus || img.moderationStatus === "PASS")
-      .map((img) => img.url)  // 原图
+      .map((img) => (img.url || "").replace("http://", "https://"))  // 强制 HTTPS
       .filter(Boolean);
   }
 }

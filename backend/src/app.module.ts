@@ -16,6 +16,7 @@ import { UploadModule } from "./upload/upload.module";
 import { CommentsModule } from "./comments/comments.module";
 import { MusicModule } from "./music/music.module";
 import { SystemModule } from "./system/system.module";
+import { ProxyModule } from "./proxy/proxy.module";
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { SystemModule } from "./system/system.module";
     CommentsModule,
     MusicModule,
     SystemModule,
+    ProxyModule,
   ],
   controllers: [AppController],
   providers: [AppService],

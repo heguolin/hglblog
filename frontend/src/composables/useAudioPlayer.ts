@@ -58,7 +58,8 @@ export function useAudioPlayer() {
       const track = playlist.value[index];
       const { data } = await client.get(`/music/url?id=${track.id}`);
       if (data.url) {
-        audio.src = data.url;
+        // 通过后端代理避免 Mixed Content
+        audio.src = `/api/proxy/audio?url=${encodeURIComponent(data.url)}`;
         audio.load();
         play();
       } else {

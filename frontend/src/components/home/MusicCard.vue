@@ -51,7 +51,7 @@ const progressPercent = computed(() =>
     <div v-else-if="currentTrack" class="flex items-center gap-5 flex-1">
       <!-- 封面 -->
       <div class="relative w-[100px] h-[100px] rounded-2xl shrink-0 overflow-hidden bg-gradient-to-br from-accent-purple via-accent-pink to-accent-blue flex items-center justify-center shadow-lg">
-        <img v-if="currentTrack.cover" :src="currentTrack.cover" class="absolute inset-0 w-full h-full object-cover" />
+        <img v-if="currentTrack.cover" :src="currentTrack.cover.includes('music.126.net') ? `/api/proxy/image?url=${encodeURIComponent(currentTrack.cover)}` : currentTrack.cover" class="absolute inset-0 w-full h-full object-cover" />
         <div class="text-[42px]" :class="{ 'opacity-0': currentTrack.cover }">🎵</div>
         <!-- 无音源降级 -->
         <div v-if="!player.hasUrl.value" class="absolute inset-0 bg-black/60 flex items-center justify-center text-white/60 text-xs">

@@ -41,7 +41,7 @@ export class MusicService {
         name: t.name as string,
         artist: (t.ar as Array<{ name: string }>)?.map((a) => a.name).join(" / ") || "未知",
         album: ((t.al as { name: string })?.name) ?? "",
-        cover: ((t.al as { picUrl: string })?.picUrl) ?? "",
+        cover: (((t.al as { picUrl: string })?.picUrl) ?? "").replace("http://", "https://"),
       }));
       this.cacheSet(cacheKey, mapped);
       return mapped;
@@ -60,7 +60,7 @@ export class MusicService {
         return { url: null, id };
       }
       const data = res.body as { data?: Array<{ url: string | null }> };
-      const url = data?.data?.[0]?.url ?? null;
+      const url = (data?.data?.[0]?.url ?? "").replace("http://", "https://") || null;
       if (!url) this.logger.warn(`歌曲 ${id} 无播放 URL（可能无版权/VIP）`);
       return { url, id };
     } catch (err) {

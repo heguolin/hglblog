@@ -26,7 +26,7 @@ hglblog/
 │   │   ├── components/
 │   │   │   ├── layout/          # Background / DanmakuBg / Sidebar / Footer
 │   │   │   ├── home/            # 首页 Bento 卡片组件 (8 个) + FriendCard / ChatterCard
-│   │   │   ├── common/          # LazyImage / CommentWidget
+│   │   │   ├── common/          # LazyImage（懒加载+blur-up+缩略图）/ CommentWidget
 │   │   │   └── admin/           # 后台布局
 │   │   ├── composables/         # useGsap / useSakura / useCursorGlow / useSEO
 │   │   ├── router/              # 前台路由 + /admin/* 后台路由
@@ -98,6 +98,8 @@ hglblog/
 - **毛玻璃**：`backdrop-filter: blur(20px) saturate(180%)`，标准/加强两层
 - **强调色**：粉 `#ff6b9d` / 紫 `#c084fc` / 蓝 `#60a5fa` / 青 `#22d3ee`
 - **GSAP 动效**：卡片滚动淡入上浮、3D 倾斜、stagger 错峰入场
+- **图片懒加载**：LazyImage 组件 — IntersectionObserver 懒加载 + CSS blur-up 渐入过渡（模糊→清晰）+ aspect-ratio 防 CLS
+- **图片缩略图**：Nginx image_filter 动态缩放，原图 7.7MB → 缩略图 ~150KB（50 倍压缩）
 
 ## 快速开始
 
@@ -201,10 +203,22 @@ PUT    /api/auth/profile                       # 更新管理员头像
 
 ## 图片管理
 
-所有图片统一存储在外部图床 `img.hgl123.icu`：
+所有图片统一存储在外部图床 `img.hgl123.icu`（同服务器、PM2 托管、Nginx 反代）：
 - 后台上传：前端选文件 → POST `/api/upload`（后端中转，token 只存服务器 `.env`） → 转发图床 `POST /api/upload` → 返回 URL 存入数据库
 - 博客服务器不存储任何图片文件，只存 URL
-- 动态背景：后端缓存 10 分钟，优先缩略图（30KB WebP），降级回深色渐变 + 光球
+- **缩略图**：Nginx `image_filter` 模块动态缩放，URL 格式 `https://img.hgl123.icu/thumb/<文件名>?w=<宽度>`。前端 LazyImage 组件通过 `thumbWidth` prop 自动生成缩略图 URL，无需手动拼接
+- **动态背景**：后端缓存 10 分钟，优先缩略图（30KB WebP），降级回深色渐变 + 光球
+- 图床 Nginx 配置文件：`deploy/image-host-nginx.conf`
+
+### 图片环境变量（在项目根目录创建 `.env`，Docker Compose 自动读取）
+
+```env
+IMG_UPLOAD_TOKEN=xxx    # 图床上传 Token
+IMG_USERNAME=xxx        # 图床登录用户名
+IMG_PASSWORD=xxx        # 图床登录密码
+```
+
+> Docker Compose 读取 `docker-compose.yml` 同级目录的 `.env`，不是 `backend/.env`。
 
 ## 权限模型
 
@@ -228,23 +242,29 @@ cd /opt && git clone https://github.com/heguolin/hglblog.git
 cd hglblog
 bash deploy/init-server.sh
 
-# 3. 配置生产环境变量（替换 TODO 为真实值）
-cp backend/.env.production backend/.env
-nano backend/.env
+# 3. 配置生产环境变量（在项目根目录创建 .env，不是 backend/.env）
+cp backend/.env.production .env
+nano .env
 # 必须替换:
-#   TODO_REPLACE_DB_PASSWORD    — 数据库密码
-#   TODO_REPLACE_JWT_SECRET     — openssl rand -hex 32 生成
-#   TODO_REPLACE_IMG_UPLOAD_TOKEN — 图床 API Token
-#   TODO_REPLACE_IMG_USERNAME   — 图床登录名
-#   TODO_REPLACE_IMG_PASSWORD   — 图床登录密码
+#   DB_PASSWORD         — 数据库密码
+#   JWT_SECRET          — openssl rand -hex 32 生成
+#   IMG_UPLOAD_TOKEN    — 图床 API Token
+#   IMG_USERNAME        — 图床登录名
+#   IMG_PASSWORD        — 图床登录密码
 
 # 4. 一键部署
 bash deploy/deploy.sh
 
-# 5. 申请 SSL 证书
-sudo certbot --nginx -d hgl123.icu
+# 5. 部署图床 Nginx 配置（含缩略图 endpoint）
+cp deploy/image-host-nginx.conf /etc/nginx/conf.d/image-host.conf
+mkdir -p /var/cache/nginx/thumbs && chown nginx:nginx /var/cache/nginx/thumbs
+nginx -t && nginx -s reload
 
-# 6. 登录后台改密码
+# 6. 申请 SSL 证书
+sudo certbot --nginx -d hgl123.icu
+sudo certbot --nginx -d img.hgl123.icu
+
+# 7. 登录后台改密码
 # https://hgl123.icu/admin/login  默认 admin / admin123
 ```
 
@@ -254,6 +274,10 @@ sudo certbot --nginx -d hgl123.icu
 cd /opt/hglblog
 git pull origin main
 bash deploy/deploy.sh
+
+# 图床 Nginx 配置有变更时，同步更新
+cp deploy/image-host-nginx.conf /etc/nginx/conf.d/image-host.conf
+nginx -t && nginx -s reload
 ```
 
 ### 日常维护

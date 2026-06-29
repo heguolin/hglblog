@@ -108,3 +108,22 @@ ThemeCard(col-3)    | SystemInfoCard(col-9)
 - docker-compose 中 PG/Redis 不暴露外网端口，后端端口绑 `127.0.0.1:4000:4000`
 - Nginx 必须配 `try_files $uri $uri/ /index.html` 支持 SPA 路由刷新
 - 图床数据也需要备份，图床挂了博客图片会全部裂开
+
+## Skill routing
+
+When the user's request matches an available skill, invoke it via the Skill tool. When in doubt, invoke the skill.
+
+Key routing rules:
+- Product ideas/brainstorming → invoke /office-hours
+- Strategy/scope → invoke /plan-ceo-review
+- Architecture → invoke /plan-eng-review
+- Design system/plan review → invoke /design-consultation or /plan-design-review
+- Full review pipeline → invoke /autoplan
+- Bugs/errors → invoke /investigate
+- QA/testing site behavior → invoke /qa or /qa-only
+- Code review/diff check → invoke /review
+- Visual polish → invoke /design-review
+- Ship/deploy/PR → invoke /ship or /land-and-deploy
+- Save progress → invoke /context-save
+- Resume context → invoke /context-restore
+- Author a backlog-ready spec/issue → invoke /spec

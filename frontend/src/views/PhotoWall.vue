@@ -116,6 +116,7 @@ onUnmounted(() => {
               :src="album.coverImage"
               :alt="album.name"
               aspect-ratio="16/9"
+              :thumb-width="400"
               class="rounded-lg"
             />
             <div v-else class="w-full h-full flex items-center justify-center text-4xl">🖼️</div>
@@ -171,6 +172,7 @@ onUnmounted(() => {
               :src="photo.thumbnail || photo.url"
               :alt="photo.title || ''"
               aspect-ratio="1/1"
+              :thumb-width="300"
               class="rounded-xl"
             />
             <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">

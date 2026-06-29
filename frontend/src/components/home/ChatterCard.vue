@@ -31,6 +31,7 @@ defineProps<{
         :src="chatter.coverImage"
         :alt="chatter.title"
         aspect-ratio="16/9"
+        :thumb-width="400"
         class="rounded-t-xl"
       />
       <div

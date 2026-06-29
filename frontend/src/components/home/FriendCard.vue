@@ -35,6 +35,7 @@ defineProps<{
         :src="friend.avatar"
         :alt="friend.name"
         aspect-ratio="1/1"
+        :thumb-width="100"
         class="rounded-full"
       />
       <div v-else class="w-full h-full flex items-center justify-center text-2xl font-bold text-accent-cyan">

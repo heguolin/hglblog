@@ -46,6 +46,7 @@ onMounted(async () => {
         :src="post.coverImage"
         :alt="post.title"
         aspect-ratio="16/9"
+        :thumb-width="400"
         class="absolute inset-0 rounded-xl"
       />
       <div v-else class="w-full h-full flex items-center justify-center text-6xl">📝</div>

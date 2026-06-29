@@ -57,6 +57,7 @@ onMounted(async () => {
           :src="album.coverImage"
           :alt="album.name"
           aspect-ratio="4/3"
+          :thumb-width="400"
           class="rounded-xl"
         />
         <div v-else class="w-full h-full flex items-center justify-center text-5xl">🌸</div>

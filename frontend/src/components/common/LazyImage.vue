@@ -6,6 +6,7 @@ const props = withDefaults(defineProps<{
   alt?: string;
   aspectRatio?: string;
   blurUp?: boolean;
+  thumbWidth?: number;   // 缩略图宽度，如 400；传入后自动用 img.hgl123.icu/thumb/ 加载
   objectFit?: string;
   class?: string;
 }>(), {
@@ -21,8 +22,18 @@ const imgRef = ref<HTMLDivElement>();
 const imgEl = ref<HTMLImageElement>();
 let observer: IntersectionObserver | null = null;
 
-// 动态过渡样式 — blur-up 模式下图片始终可见（opacity:1），
-// 加载中 blur(20px) 让内容模糊但色彩可见，loaded 后 blur→0 渐入清晰
+// ====== 缩略图 URL 自动生成 ======
+const displaySrc = computed(() => {
+  if (!props.thumbWidth) return props.src;
+  // 只对 img.hgl123.icu 的图片生成缩略图，跳过 data: / blob:
+  if (!props.src.includes("img.hgl123.icu")) return props.src;
+  return props.src
+    .replace("/i/", "/thumb/")
+    .replace("/uploads/", "/thumb/")
+    + `?w=${props.thumbWidth}`;
+});
+
+// 动态过渡样式
 const imgStyle = computed(() => {
   if (!props.blurUp) return {};
   if (!loaded.value) {
@@ -60,10 +71,9 @@ function onLoad() {
 
 function onError() {
   error.value = true;
-  loaded.value = true; // 解除 blur 状态
+  loaded.value = true;
 }
 
-// transitionend 后清理 will-change，释放 GPU 内存
 function onTransitionEnd() {
   if (imgEl.value) {
     imgEl.value.style.willChange = "auto";
@@ -78,7 +88,7 @@ function onTransitionEnd() {
     :class="[props.class || 'rounded-xl', !blurUp ? 'bg-white/5' : '']"
     :style="aspectRatio ? { aspectRatio } : {}"
   >
-    <!-- 骨架 shimmer — 非 blur-up 模式或 blur-up 模式图片未进入视口时显示 -->
+    <!-- 骨架 shimmer -->
     <div
       v-if="!loaded && (!blurUp || !inView)"
       class="absolute inset-0 animate-pulse bg-white/[0.03]"
@@ -88,7 +98,7 @@ function onTransitionEnd() {
     <img
       v-if="inView"
       ref="imgEl"
-      :src="src"
+      :src="displaySrc"
       :alt="alt"
       :class="[
         props.class || 'rounded-xl',
@@ -102,7 +112,7 @@ function onTransitionEnd() {
       @transitionend="onTransitionEnd"
     />
 
-    <!-- 错误回退 — 显示 alt 文本 -->
+    <!-- 错误回退 -->
     <div
       v-if="error"
       class="absolute inset-0 flex items-center justify-center bg-white/[0.03]"

@@ -210,6 +210,7 @@ onMounted(() => {
           <LazyImage
             :src="post.coverImage || placeholderCover"
             :alt="post.title"
+            :thumb-width="400"
             class="rounded-xl"
           />
           <!-- 浮在封面上的徽章 -->

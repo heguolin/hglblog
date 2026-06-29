@@ -53,7 +53,7 @@ onMounted(async () => {
     <div ref="bannerRef" class="relative pb-12 md:pb-16">
       <!-- Banner 背景层（overflow-hidden 裁切圆角） -->
       <section class="relative rounded-2xl overflow-hidden h-56 md:h-72 lg:h-80">
-        <LazyImage :src="bannerImage" alt="" aspect-ratio="3/1" class="absolute inset-0 rounded-2xl" />
+        <LazyImage :src="bannerImage" alt="" aspect-ratio="3/1" :thumb-width="1200" class="absolute inset-0 rounded-2xl" />
         <div class="absolute inset-0 bg-gradient-to-t from-[#0f0c29]/95 via-[#0f0c29]/30 to-transparent" />
       </section>
 

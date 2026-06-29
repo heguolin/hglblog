@@ -137,6 +137,7 @@ watch(() => route.params.id, (newId) => {
               :src="img"
               :alt="`图片 ${i + 1}`"
               :aspect-ratio="chatter.images.length === 1 ? '16/9' : '1/1'"
+              :thumb-width="400"
               class="rounded-xl"
             />
             <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">

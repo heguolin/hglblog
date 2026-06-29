@@ -182,6 +182,7 @@ watch(() => route.params.slug, (newSlug) => {
             :src="post.coverImage"
             :alt="post.title"
             aspect-ratio="16/9"
+            :thumb-width="800"
             class="rounded-xl h-64 md:h-80"
           />
         </div>

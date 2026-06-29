@@ -80,7 +80,7 @@ onUnmounted(() => {
     <template v-if="!useFallback && images.length > 0">
       <!-- 当前图 -->
       <img
-        :src="images[currentIndex]"
+        :src="images[currentIndex].replace('/i/', '/thumb/') + '?w=1920'"
         class="absolute inset-0 w-full h-full object-cover"
         :class="{ 'opacity-100': !isTransitioning, 'opacity-0': isTransitioning }"
         style="transition: opacity 1.2s ease-in-out"
@@ -88,7 +88,7 @@ onUnmounted(() => {
       <!-- 预加载不可见层 -->
       <img
         v-if="images.length > 1"
-        :src="images[(currentIndex + 1) % images.length]"
+        :src="images[(currentIndex + 1) % images.length].replace('/i/', '/thumb/') + '?w=1920'"
         class="hidden"
       />
       <!-- 暗色遮罩 -->

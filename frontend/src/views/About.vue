@@ -60,7 +60,7 @@ onMounted(async () => {
       <!-- 头像 + 标题（骑在 banner 下边界上） -->
       <div class="absolute left-8 md:left-12 bottom-0 flex items-end gap-4 md:gap-5">
         <div class="about-hero-item w-24 h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 rounded-full border-[3px] border-white/20 shadow-xl shadow-black/40 shrink-0 overflow-hidden bg-[#1a1a2e]">
-          <img v-if="avatarUrl" :src="avatarUrl" class="w-full h-full object-cover" />
+          <img v-if="avatarUrl" :src="avatarUrl" class="w-full h-full object-cover" loading="lazy" />
           <div v-else class="w-full h-full flex items-center justify-center text-3xl md:text-4xl font-bold text-white">H</div>
         </div>
         <div class="about-hero-item pb-1 md:pb-2">

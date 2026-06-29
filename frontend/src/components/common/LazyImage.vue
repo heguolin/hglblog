@@ -21,20 +21,19 @@ const imgRef = ref<HTMLDivElement>();
 const imgEl = ref<HTMLImageElement>();
 let observer: IntersectionObserver | null = null;
 
-// 动态过渡样式 — blur-up 模式下 loaded 后触发 blur→clear + fade-in
+// 动态过渡样式 — blur-up 模式下图片始终可见（opacity:1），
+// 加载中 blur(20px) 让内容模糊但色彩可见，loaded 后 blur→0 渐入清晰
 const imgStyle = computed(() => {
   if (!props.blurUp) return {};
   if (!loaded.value) {
     return {
       filter: "blur(20px) scale(1.1)",
       willChange: "filter, transform",
-      opacity: "0",
     };
   }
   return {
     filter: "blur(0) scale(1)",
-    opacity: "1",
-    transition: "filter 0.5s ease, opacity 0.5s ease",
+    transition: "filter 0.5s ease",
   };
 });
 
@@ -75,8 +74,8 @@ function onTransitionEnd() {
 <template>
   <div
     ref="imgRef"
-    class="relative overflow-hidden bg-white/5"
-    :class="[props.class || 'rounded-xl']"
+    class="relative overflow-hidden"
+    :class="[props.class || 'rounded-xl', !blurUp ? 'bg-white/5' : '']"
     :style="aspectRatio ? { aspectRatio } : {}"
   >
     <!-- 骨架 shimmer — 非 blur-up 模式或 blur-up 模式图片未进入视口时显示 -->
@@ -95,8 +94,7 @@ function onTransitionEnd() {
         props.class || 'rounded-xl',
         'w-full h-full',
         `object-${objectFit}`,
-        blurUp ? 'blur-up-img' : 'transition-opacity duration-500',
-        loaded ? 'opacity-100' : 'opacity-0',
+        blurUp ? 'blur-up-img' : `transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`,
       ]"
       :style="imgStyle"
       @load="onLoad"

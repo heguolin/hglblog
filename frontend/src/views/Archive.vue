@@ -210,9 +210,8 @@ onMounted(() => {
           <LazyImage
             :src="post.coverImage || placeholderCover"
             :alt="post.title"
-            aspect-ratio="16/9"
             :thumb-width="400"
-            class="w-full h-full rounded-xl"
+            class="absolute inset-0 rounded-xl"
           />
           <!-- 浮在封面上的徽章 -->
           <div class="absolute top-3 left-3 flex items-center gap-2">

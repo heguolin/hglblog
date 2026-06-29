@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import dayjs from "dayjs";
+import LazyImage from "@/components/common/LazyImage.vue";
 
 export interface ChatterCardData {
   id: number;
@@ -25,11 +26,12 @@ defineProps<{
   >
     <!-- 封面图区域 -->
     <div class="relative h-44 overflow-hidden">
-      <img
+      <LazyImage
         v-if="chatter.coverImage"
         :src="chatter.coverImage"
         :alt="chatter.title"
-        class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+        aspect-ratio="16/9"
+        class="rounded-t-xl"
       />
       <div
         v-else

@@ -7,6 +7,7 @@ import hljs from "highlight.js";
 import { fetchPostBySlug, fetchPosts, type Post } from "@/api/posts";
 import { useSEO } from "@/composables/useSEO";
 import CommentSection from "@/components/common/CommentSection.vue";
+import LazyImage from "@/components/common/LazyImage.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -177,10 +178,11 @@ watch(() => route.params.slug, (newSlug) => {
           v-if="post.coverImage"
           class="rounded-xl overflow-hidden bg-white/5"
         >
-          <img
+          <LazyImage
             :src="post.coverImage"
             :alt="post.title"
-            class="w-full h-64 md:h-80 object-cover"
+            aspect-ratio="16/9"
+            class="rounded-xl h-64 md:h-80"
           />
         </div>
 

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { fetchAlbums, type Album } from "@/api/albums";
+import LazyImage from "@/components/common/LazyImage.vue";
 
 const album = ref<Album | null>(null);
 const totalPhotos = ref(0);
@@ -51,11 +52,12 @@ onMounted(async () => {
       <div class="absolute top-1.5 left-1.5 right-1.5 h-full rounded-xl bg-white/[0.06] border border-white/5 -rotate-[1.5deg]" />
       <!-- 顶 — 真图 -->
       <div class="absolute top-3 left-0 right-3 h-full rounded-xl overflow-hidden bg-gradient-to-br from-accent-pink/30 via-accent-purple/30 to-accent-blue/30 shadow-lg shadow-black/20">
-        <img
+        <LazyImage
           v-if="album.coverImage"
           :src="album.coverImage"
           :alt="album.name"
-          class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          aspect-ratio="4/3"
+          class="rounded-xl"
         />
         <div v-else class="w-full h-full flex items-center justify-center text-5xl">🌸</div>
       </div>

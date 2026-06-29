@@ -3,6 +3,7 @@ import { ref, onMounted, nextTick } from "vue";
 import gsap from "gsap";
 import client from "@/api/client";
 import CommentSection from "@/components/common/CommentSection.vue";
+import LazyImage from "@/components/common/LazyImage.vue";
 import { useSEO } from "@/composables/useSEO";
 useSEO("关于我");
 
@@ -52,7 +53,7 @@ onMounted(async () => {
     <div ref="bannerRef" class="relative pb-12 md:pb-16">
       <!-- Banner 背景层（overflow-hidden 裁切圆角） -->
       <section class="relative rounded-2xl overflow-hidden h-56 md:h-72 lg:h-80">
-        <img :src="bannerImage" alt="" class="absolute inset-0 w-full h-full object-cover" />
+        <LazyImage :src="bannerImage" alt="" aspect-ratio="3/1" class="absolute inset-0 rounded-2xl" />
         <div class="absolute inset-0 bg-gradient-to-t from-[#0f0c29]/95 via-[#0f0c29]/30 to-transparent" />
       </section>
 

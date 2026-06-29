@@ -2,6 +2,7 @@
 import { ref, onMounted } from "vue";
 import dayjs from "dayjs";
 import { fetchRecentPosts, type Post } from "@/api/posts";
+import LazyImage from "@/components/common/LazyImage.vue";
 
 const post = ref<Post | null>(null);
 const loading = ref(true);
@@ -40,11 +41,12 @@ onMounted(async () => {
   >
     <!-- 封面图 — 加高到 h-52 增强视觉权重 -->
     <div class="relative w-full h-44 md:h-52 rounded-xl overflow-hidden bg-gradient-to-br from-[#1a1a2e] via-accent-purple/20 to-accent-blue/10">
-      <img
+      <LazyImage
         v-if="post.coverImage"
         :src="post.coverImage"
         :alt="post.title"
-        class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+        aspect-ratio="16/9"
+        class="absolute inset-0 rounded-xl"
       />
       <div v-else class="w-full h-full flex items-center justify-center text-6xl">📝</div>
       <!-- 渐变遮罩 -->

@@ -4,6 +4,7 @@ import dayjs from "dayjs";
 import { fetchPosts, type Post } from "@/api/posts";
 import client from "@/api/client";
 import { useSEO } from "@/composables/useSEO";
+import LazyImage from "@/components/common/LazyImage.vue";
 
 const posts = ref<Post[]>([]);
 const total = ref(0);
@@ -206,11 +207,10 @@ onMounted(() => {
       >
         <!-- 封面图区 -->
         <div class="relative aspect-video overflow-hidden">
-          <img
+          <LazyImage
             :src="post.coverImage || placeholderCover"
             :alt="post.title"
-            class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            loading="lazy"
+            class="rounded-xl"
           />
           <!-- 浮在封面上的徽章 -->
           <div class="absolute top-3 left-3 flex items-center gap-2">

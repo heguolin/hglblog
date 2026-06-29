@@ -3,6 +3,7 @@ import { ref, onMounted, watch } from "vue";
 import { useRoute } from "vue-router";
 import dayjs from "dayjs";
 import { fetchChatterById, type Chatter } from "@/api/chatters";
+import LazyImage from "@/components/common/LazyImage.vue";
 
 const route = useRoute();
 
@@ -132,10 +133,11 @@ watch(() => route.params.id, (newId) => {
             :class="chatter.images.length === 1 ? 'aspect-video' : 'aspect-square'"
             @click="openLightbox(i)"
           >
-            <img
+            <LazyImage
               :src="img"
               :alt="`图片 ${i + 1}`"
-              class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              :aspect-ratio="chatter.images.length === 1 ? '16/9' : '1/1'"
+              class="rounded-xl"
             />
             <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
               <span class="text-white opacity-0 group-hover:opacity-100 transition-opacity text-2xl">🔍</span>
@@ -199,10 +201,12 @@ watch(() => route.params.id, (newId) => {
           </button>
 
           <!-- 图片 -->
-          <img
+          <LazyImage
             :src="chatter.images[lightboxIndex]"
             :alt="`图片 ${lightboxIndex + 1}`"
-            class="max-w-[90vw] max-h-[85vh] object-contain rounded-lg"
+            :blur-up="false"
+            object-fit="contain"
+            class="max-w-[90vw] max-h-[85vh] rounded-lg"
           />
 
           <!-- 下一张 -->

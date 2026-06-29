@@ -3,6 +3,7 @@ import { useSEO } from "@/composables/useSEO";
 import { ref, onMounted, onUnmounted } from "vue";
 import dayjs from "dayjs";
 import { fetchAlbums, fetchAlbumById, type Album, type Photo } from "@/api/albums";
+import LazyImage from "@/components/common/LazyImage.vue";
 
 const albums = ref<Album[]>([]);
 const loading = ref(true);
@@ -110,11 +111,12 @@ onUnmounted(() => {
           <div class="absolute top-0 left-3 right-3 h-full rounded-lg bg-white/5 rotate-2" />
           <div class="absolute top-1 left-1 right-1 h-full rounded-lg bg-white/10 -rotate-1" />
           <div class="absolute top-2 left-0 right-2 h-full rounded-lg overflow-hidden bg-gradient-to-br from-accent-pink/30 via-accent-purple/30 to-accent-blue/30">
-            <img
+            <LazyImage
               v-if="album.coverImage"
               :src="album.coverImage"
               :alt="album.name"
-              class="w-full h-full object-cover"
+              aspect-ratio="16/9"
+              class="rounded-lg"
             />
             <div v-else class="w-full h-full flex items-center justify-center text-4xl">🖼️</div>
           </div>
@@ -165,10 +167,11 @@ onUnmounted(() => {
             class="relative aspect-square rounded-xl overflow-hidden bg-white/5 cursor-pointer group"
             @click="openLightbox(selectedAlbum.photos, i)"
           >
-            <img
+            <LazyImage
               :src="photo.thumbnail || photo.url"
               :alt="photo.title || ''"
-              class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              aspect-ratio="1/1"
+              class="rounded-xl"
             />
             <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
               <span class="text-white opacity-0 group-hover:opacity-100 transition-opacity text-xl">{{ photo.title || "📷" }}</span>
@@ -198,10 +201,12 @@ onUnmounted(() => {
           <!-- 上一张 -->
           <button v-if="lightboxIndex > 0" class="absolute left-4 top-1/2 -translate-y-1/2 text-white/60 hover:text-white text-5xl z-10 p-2 transition-colors" @click.stop="prevImage">‹</button>
           <!-- 图片 -->
-          <img
+          <LazyImage
             :src="lightboxPhotos[lightboxIndex]?.url"
             :alt="lightboxPhotos[lightboxIndex]?.title || ''"
-            class="max-w-[92vw] max-h-[88vh] object-contain rounded-lg"
+            :blur-up="false"
+            object-fit="contain"
+            class="max-w-[92vw] max-h-[88vh] rounded-lg"
           />
           <!-- 下一张 -->
           <button v-if="lightboxIndex < lightboxPhotos.length - 1" class="absolute right-4 top-1/2 -translate-y-1/2 text-white/60 hover:text-white text-5xl z-10 p-2 transition-colors" @click.stop="nextImage">›</button>

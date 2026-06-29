@@ -8,6 +8,8 @@ export interface FriendData {
   approved: boolean;
 }
 
+import LazyImage from "@/components/common/LazyImage.vue";
+
 defineProps<{
   friend: FriendData;
 }>();
@@ -28,11 +30,12 @@ defineProps<{
 
     <!-- 头像 -->
     <div class="w-20 h-20 rounded-full border-2 border-white/10 shrink-0 overflow-hidden bg-white/5 transition-transform duration-300 group-hover:scale-110">
-      <img
+      <LazyImage
         v-if="friend.avatar"
         :src="friend.avatar"
         :alt="friend.name"
-        class="w-full h-full object-cover"
+        aspect-ratio="1/1"
+        class="rounded-full"
       />
       <div v-else class="w-full h-full flex items-center justify-center text-2xl font-bold text-accent-cyan">
         {{ friend.name[0] || '?' }}

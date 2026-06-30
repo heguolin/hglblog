@@ -20,6 +20,7 @@ export function useAudioPlayer() {
   const hasUrl = ref(true);
   const playlistLoaded = ref(false);
   const playlistLoading = ref(false);
+  let loadId = 0; // 请求序列号，防止竞态覆盖
 
   function formatTime(s: number) {
     const m = Math.floor(s / 60);
@@ -50,12 +51,15 @@ export function useAudioPlayer() {
 
   async function loadTrack(index: number, autoPlay = true) {
     if (index < 0 || index >= playlist.value.length) return;
+    const myId = ++loadId; // 记录本次请求序列号
     currentIndex.value = index;
     loading.value = true;
     hasUrl.value = true;
     try {
       const track = playlist.value[index];
       const { data } = await client.get(`/music/url?id=${track.id}`);
+      // 竞态保护：如果新请求已发起，丢弃本次结果
+      if (myId !== loadId) return;
       if (data.url) {
         audio.src = `/api/proxy/audio?url=${encodeURIComponent(data.url)}`;
         audio.load();
@@ -67,7 +71,7 @@ export function useAudioPlayer() {
     } catch {
       hasUrl.value = false;
     } finally {
-      loading.value = false;
+      if (myId === loadId) loading.value = false;
     }
   }
 

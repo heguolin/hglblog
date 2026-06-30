@@ -36,10 +36,9 @@ export function useAudioPlayer() {
       playlistLoaded.value = true;
       if (data.length > 0) {
         currentIndex.value = 0;
-        await loadTrack(0);
+        await loadTrack(0, false); // 不自动播放——浏览器会拦截非用户手势的 play()
       }
     } catch {
-      // 兜底：mock 数据
       playlist.value = [{
         id: 0, name: "暂无歌曲", artist: "请检查音乐服务", album: "", cover: "",
       }];
@@ -49,7 +48,7 @@ export function useAudioPlayer() {
     }
   }
 
-  async function loadTrack(index: number) {
+  async function loadTrack(index: number, autoPlay = true) {
     if (index < 0 || index >= playlist.value.length) return;
     currentIndex.value = index;
     loading.value = true;
@@ -58,14 +57,12 @@ export function useAudioPlayer() {
       const track = playlist.value[index];
       const { data } = await client.get(`/music/url?id=${track.id}`);
       if (data.url) {
-        // 通过后端代理避免 Mixed Content
         audio.src = `/api/proxy/audio?url=${encodeURIComponent(data.url)}`;
         audio.load();
-        play();
+        if (autoPlay) play();
       } else {
         hasUrl.value = false;
-        // 自动跳过无版权曲
-        setTimeout(() => next(), 50);
+        if (autoPlay) setTimeout(() => next(), 50);
       }
     } catch {
       hasUrl.value = false;
@@ -75,10 +72,16 @@ export function useAudioPlayer() {
   }
 
   function play() {
-    audio.play().catch(() => {
-      // 浏览器自动播放策略限制
-    });
+    audio.play().catch(() => {});
     isPlaying.value = true;
+  }
+
+  // 解锁音频——在用户手势同步调用链中执行，后续异步 play() 才能通过浏览器策略
+  function unlock() {
+    const p = audio.play();
+    if (p !== undefined) {
+      p.then(() => { audio.pause(); }).catch(() => {});
+    }
   }
 
   function pause() {
@@ -92,12 +95,14 @@ export function useAudioPlayer() {
 
   function prev() {
     if (playlist.value.length === 0) return;
+    unlock();
     const idx = currentIndex.value <= 0 ? playlist.value.length - 1 : currentIndex.value - 1;
     loadTrack(idx);
   }
 
   function next() {
     if (playlist.value.length === 0) return;
+    unlock();
     const idx = (currentIndex.value + 1) % playlist.value.length;
     loadTrack(idx);
   }
@@ -125,6 +130,6 @@ export function useAudioPlayer() {
   return {
     playlist, currentIndex, isPlaying, currentTime, duration,
     loading, hasUrl, playlistLoaded,
-    loadPlaylist, loadTrack, toggle, prev, next, seek, formatTime,
+    loadPlaylist, loadTrack, unlock, toggle, prev, next, seek, formatTime,
   };
 }

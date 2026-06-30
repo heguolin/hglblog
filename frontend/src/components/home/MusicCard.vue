@@ -43,6 +43,7 @@ function closeDropdown() {
 }
 
 function selectTrack(originalIndex: number) {
+  player.unlock(); // 同步解锁浏览器音频策略，确保后续异步 play() 不被拦截
   player.loadTrack(originalIndex);
   closeDropdown();
 }

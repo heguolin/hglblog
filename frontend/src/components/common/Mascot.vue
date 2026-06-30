@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick } from "vue";
 import * as PIXI from "pixi.js";
-import { Live2DModel, InternalModel } from "pixi-live2d-display";
+import { Live2DModel } from "pixi-live2d-display";
 import axios from "axios";
 
-// pixi-live2d-display 的 Cubism4 运行时需要全局 PIXI
+// PIXI v6: 确保全局 PIXI 可用（pixi-live2d-display 需要）
 (window as any).PIXI = PIXI;
 
 // ====== 状态 ======
@@ -17,7 +17,7 @@ const inputText = ref("");
 const sending = ref(false);
 let bubbleTimer: ReturnType<typeof setInterval> | null = null;
 let app: PIXI.Application | null = null;
-let model: Live2DModel<InternalModel> | null = null;
+let model: Live2DModel<any> | null = null;
 
 // ====== 冒泡语录 ======
 const BUBBLE_QUOTES = [
@@ -46,15 +46,6 @@ onMounted(async () => {
   });
 
   containerRef.value.appendChild(app.view as unknown as Node);
-
-  // 动态加载 Cubism4 运行时（绕开 Vite 模块解析）
-  await new Promise<void>((resolve, reject) => {
-    const s = document.createElement("script");
-    s.src = "/live2d/cubism4.runtime.min.js";
-    s.onload = () => resolve();
-    s.onerror = () => reject(new Error("Cubism4 运行时加载失败"));
-    document.head.appendChild(s);
-  });
 
   try {
     model = await Live2DModel.from("/live2d/cat.model3.json");

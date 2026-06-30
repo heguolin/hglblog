@@ -36,8 +36,11 @@ export function useAudioPlayer() {
       playlist.value = data;
       playlistLoaded.value = true;
       if (data.length > 0) {
-        currentIndex.value = 0;
-        await loadTrack(0, false); // 不自动播放——浏览器会拦截非用户手势的 play()
+        // 恢复上次播放位置
+        const saved = parseInt(localStorage.getItem("music_index") || "0", 10);
+        const startIdx = saved > 0 && saved < data.length ? saved : 0;
+        currentIndex.value = startIdx;
+        await loadTrack(startIdx, false);
       }
     } catch {
       playlist.value = [{
@@ -63,7 +66,10 @@ export function useAudioPlayer() {
       if (data.url) {
         audio.src = `/api/proxy/audio?url=${encodeURIComponent(data.url)}`;
         audio.load();
-        if (autoPlay) play();
+        if (autoPlay) {
+          localStorage.setItem("music_index", String(index));
+          play();
+        }
       } else {
         hasUrl.value = false;
         if (autoPlay) setTimeout(() => next(), 50);

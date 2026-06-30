@@ -125,6 +125,6 @@ export function useAudioPlayer() {
   return {
     playlist, currentIndex, isPlaying, currentTime, duration,
     loading, hasUrl, playlistLoaded,
-    loadPlaylist, toggle, prev, next, seek, formatTime,
+    loadPlaylist, loadTrack, toggle, prev, next, seek, formatTime,
   };
 }

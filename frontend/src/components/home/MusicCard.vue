@@ -18,12 +18,15 @@ interface PlaylistItem {
 
 const filteredPlaylist = computed<PlaylistItem[]>(() => {
   const q = searchQuery.value.toLowerCase().trim();
-  return player.playlist.value
+  const result = player.playlist.value
     .map((song, i) => ({ song, originalIndex: i }))
     .filter(({ song }) => {
       if (!q) return true;
       return song.name.toLowerCase().includes(q) || song.artist.toLowerCase().includes(q);
     });
+  // 搜索词变化时重置高亮，避免 stale index
+  highlightIndex.value = 0;
+  return result;
 });
 
 function toggleDropdown() {
@@ -115,7 +118,7 @@ const progressPercent = computed(() =>
           @click.stop="toggleDropdown"
         >
           <span>🎵 歌单</span>
-          <span class="text-text-muted text-[10px]" :class="dropdownOpen && 'rotate-180'" style="transition: transform 0.2s">▼</span>
+          <span class="text-text-muted text-[10px] inline-block" :class="{ 'rotate-180': dropdownOpen }" style="transition: transform 0.2s">▼</span>
         </button>
       </div>
     </div>

@@ -33,3 +33,4 @@ npm-debug.log*
 
 # 上传临时文件
 backend/uploads/
+.gstack/

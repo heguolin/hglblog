@@ -127,3 +127,4 @@ Key routing rules:
 - Save progress → invoke /context-save
 - Resume context → invoke /context-restore
 - Author a backlog-ready spec/issue → invoke /spec
+- **重要：所有 gstack skill 产出的文档（设计文档、审查报告、QA 报告等）正文必须使用中文，代码/命令/术语可用原文**

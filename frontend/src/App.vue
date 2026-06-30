@@ -3,6 +3,7 @@ import Background from "@/components/layout/Background.vue";
 import DanmakuBg from "@/components/layout/DanmakuBg.vue";
 import Sidebar from "@/components/layout/Sidebar.vue";
 import Footer from "@/components/layout/Footer.vue";
+import Mascot from "@/components/common/Mascot.vue";
 import { useSakura } from "@/composables/useSakura";
 import { useCursorGlow } from "@/composables/useCursorGlow";
 import { useGsap } from "@/composables/useGsap";
@@ -22,6 +23,7 @@ function getTransition(meta: Record<string, unknown>): string {
     <!-- 全局固定层 -->
     <Background />
     <DanmakuBg />
+    <Mascot />
 
     <!-- 主布局：Grid 两栏
          左列 240px = 桌面侧边导航

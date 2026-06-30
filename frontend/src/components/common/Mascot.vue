@@ -1,14 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick } from "vue";
-import * as PIXI from "pixi.js";
-import { Live2DModel } from "pixi-live2d-display";
+import { ref, onMounted, onUnmounted } from "vue";
 import axios from "axios";
 
-// PIXI v6: 确保全局 PIXI 可用（pixi-live2d-display 需要）
-(window as any).PIXI = PIXI;
-
 // ====== 状态 ======
-const containerRef = ref<HTMLDivElement>();
 const bubbleOpen = ref(false);
 const bubbleText = ref("");
 const chatOpen = ref(false);
@@ -16,8 +10,6 @@ const messages = ref<{ role: "user" | "assistant"; content: string }[]>([]);
 const inputText = ref("");
 const sending = ref(false);
 let bubbleTimer: ReturnType<typeof setInterval> | null = null;
-let app: PIXI.Application | null = null;
-let model: Live2DModel<any> | null = null;
 
 // ====== 冒泡语录 ======
 const BUBBLE_QUOTES = [
@@ -33,72 +25,14 @@ const BUBBLE_QUOTES = [
   "开拓者…我一直在这里哦",
 ];
 
-// ====== Live2D 初始化 ======
-onMounted(async () => {
-  await nextTick();
-  if (!containerRef.value) return;
-
-  app = new PIXI.Application({
-    width: 200,
-    height: 200,
-    backgroundAlpha: 0,
-    antialias: true,
-  });
-
-  containerRef.value.appendChild(app.view as unknown as Node);
-
-  try {
-    model = await Live2DModel.from("/live2d/cat.model3.json");
-
-    const scale = Math.min(
-      app.screen.width / model.width,
-      app.screen.height / model.height,
-    ) * 0.85;
-
-    model.scale.set(scale);
-    model.x = app.screen.width / 2;
-    model.y = app.screen.height / 2;
-    model.anchor.set(0.5, 0.5);
-
-    app.stage.addChild(model as any);
-
-    // 交互
-    model.on("hit", () => {
-      chatOpen.value = !chatOpen.value;
-      if (chatOpen.value) {
-        bubbleOpen.value = false;
-        if (messages.value.length === 0) {
-          messages.value.push({
-            role: "assistant",
-            content: "嗨…又见面啦。叫我「流萤」就好。今天想聊什么？",
-          });
-        }
-      }
-    });
-
-    // 表情和动作
-    (model as any).expression = 0;
-    // @ts-ignore - internal API
-    const mgr = model.internalModel?.motionManager;
-    if (mgr) {
-      const keys = Object.keys(mgr.groups || {});
-      if (keys.length > 0) {
-        const randKey = keys[Math.floor(Math.random() * keys.length)];
-        model.motion(randKey);
-      }
-    }
-  } catch (err) {
-    console.warn("Live2D 模型加载失败:", err);
-  }
-
-  // 冒泡定时器: 30-60 秒随机
+onMounted(() => {
   bubbleTimer = setInterval(
     () => {
       bubbleText.value = BUBBLE_QUOTES[Math.floor(Math.random() * BUBBLE_QUOTES.length)];
       bubbleOpen.value = true;
       setTimeout(() => { bubbleOpen.value = false; }, 6000);
     },
-    30000 + Math.random() * 30000,
+    25000 + Math.random() * 25000,
   );
   // 首次 5 秒后冒泡
   setTimeout(() => {
@@ -110,10 +44,22 @@ onMounted(async () => {
 
 onUnmounted(() => {
   if (bubbleTimer) clearInterval(bubbleTimer);
-  if (app) app.destroy(true);
 });
 
 // ====== 聊天 ======
+function toggleChat() {
+  chatOpen.value = !chatOpen.value;
+  if (chatOpen.value) {
+    bubbleOpen.value = false;
+    if (messages.value.length === 0) {
+      messages.value.push({
+        role: "assistant",
+        content: "嗨…又见面啦。叫我「流萤」就好。今天想聊什么？",
+      });
+    }
+  }
+}
+
 async function sendMessage() {
   const text = inputText.value.trim();
   if (!text || sending.value) return;
@@ -126,23 +72,8 @@ async function sendMessage() {
     const { data } = await axios.post("/api/mascot/chat", {
       messages: messages.value.map((m) => ({ role: m.role, content: m.content })),
     });
-
     const reply = data.choices?.[0]?.message?.content || "嗯…我不知道该说什么。";
     messages.value.push({ role: "assistant", content: reply });
-
-    // 表情切换
-    if (model) {
-      const lower = reply.toLowerCase();
-      if (lower.includes("开心") || lower.includes("嘿嘿") || lower.includes("喜欢")) {
-        (model as any).expression = 4;
-      } else if (lower.includes("难过") || lower.includes("对不起") || lower.includes("抱歉")) {
-        (model as any).expression = 3;
-      } else if (lower.includes("厉害") || lower.includes("好棒") || lower.includes("真")) {
-        (model as any).expression = 1;
-      } else {
-        (model as any).expression = 0;
-      }
-    }
   } catch {
     messages.value.push({ role: "assistant", content: "唔…连接好像出了点问题。稍等一下再试试好吗？" });
   } finally {
@@ -167,31 +98,64 @@ function onChatKeydown(e: KeyboardEvent) {
     <Transition name="bubble">
       <div
         v-if="bubbleOpen"
-        class="glass rounded-2xl px-4 py-2.5 mb-3 max-w-[220px] text-white text-[13px] leading-relaxed shadow-lg shadow-black/20 relative cursor-default animate-fade-in"
+        class="glass rounded-2xl px-4 py-2.5 mb-3 max-w-[220px] text-white text-[13px] leading-relaxed shadow-lg shadow-black/20 relative"
       >
         {{ bubbleText }}
         <div class="absolute -bottom-2 left-8 w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-t-8 border-t-white/10" />
       </div>
     </Transition>
 
-    <!-- Live2D 容器 -->
+    <!-- 看板娘角色 -->
     <div
-      ref="containerRef"
-      class="w-[200px] h-[200px] cursor-pointer hover:scale-105 transition-transform duration-300"
+      class="relative w-[160px] h-[160px] cursor-pointer group"
       title="点击和流萤聊天"
-    />
+      @click="toggleChat"
+    >
+      <!-- 身体 -->
+      <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-[120px] h-[90px] rounded-t-[60px] rounded-b-2xl bg-gradient-to-b from-accent-purple/40 via-accent-pink/30 to-accent-blue/20 border border-white/10 shadow-lg shadow-black/30 backdrop-blur-sm">
+        <!-- 眼睛 -->
+        <div class="flex justify-center gap-4 mt-6">
+          <span class="w-4 h-4 rounded-full bg-white/90 shadow-inner" />
+          <span class="w-4 h-4 rounded-full bg-white/90 shadow-inner" />
+        </div>
+        <!-- 嘴 -->
+        <div class="flex justify-center mt-2">
+          <span class="w-3 h-3 rounded-full bg-white/50" />
+        </div>
+      </div>
+      <!-- 头 -->
+      <div class="absolute -top-1 left-1/2 -translate-x-1/2 w-[100px] h-[85px] rounded-[50px] bg-gradient-to-b from-accent-purple/30 to-accent-pink/20 border border-white/10 shadow-lg shadow-black/30 backdrop-blur-sm animate-float">
+        <!-- 眼睛 -->
+        <div class="flex justify-center gap-4 mt-7">
+          <span class="w-5 h-5 rounded-full bg-white/90 shadow-inner" />
+          <span class="w-5 h-5 rounded-full bg-white/90 shadow-inner" />
+        </div>
+        <!-- 嘴 -->
+        <div class="flex justify-center mt-1.5">
+          <span class="w-2.5 h-2.5 rounded-full bg-white/60" />
+        </div>
+        <!-- 腮红 -->
+        <span class="absolute top-10 left-3 w-4 h-2.5 rounded-full bg-accent-pink/30 blur-[2px]" />
+        <span class="absolute top-10 right-3 w-4 h-2.5 rounded-full bg-accent-pink/30 blur-[2px]" />
+      </div>
+      <!-- 光晕 -->
+      <div class="absolute -inset-2 rounded-full bg-accent-cyan/10 blur-xl animate-pulse" />
+    </div>
 
     <!-- ====== 聊天对话框 ====== -->
     <Transition name="chat">
       <div
         v-if="chatOpen"
-        class="absolute bottom-[210px] left-0 w-[340px] glass-strong rounded-2xl flex flex-col overflow-hidden shadow-2xl shadow-black/40 border border-white/10"
-        :style="{ height: '420px' }"
+        class="absolute bottom-[170px] left-0 w-[340px] glass-strong rounded-2xl flex flex-col overflow-hidden shadow-2xl shadow-black/40 border border-white/10"
+        :style="{ height: '400px' }"
       >
         <!-- 标题栏 -->
         <div class="flex items-center justify-between px-4 py-3 border-b border-white/10 shrink-0">
           <div class="flex items-center gap-2">
-            <span class="text-lg">💬</span>
+            <span class="relative flex h-2 w-2">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-cyan opacity-75" />
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-accent-cyan" />
+            </span>
             <span class="text-white text-sm font-bold">和流萤聊天</span>
           </div>
           <button
@@ -200,7 +164,6 @@ function onChatKeydown(e: KeyboardEvent) {
           >✕</button>
         </div>
 
-        <!-- 消息列表 -->
         <div class="flex-1 overflow-y-auto px-4 py-3 space-y-3">
           <div
             v-for="(msg, i) in messages"
@@ -216,7 +179,6 @@ function onChatKeydown(e: KeyboardEvent) {
               ]"
             >{{ msg.content }}</div>
           </div>
-          <!-- 打字中 -->
           <div v-if="sending" class="flex justify-start">
             <div class="bg-white/[0.06] rounded-2xl rounded-bl-md px-4 py-3">
               <span class="inline-flex gap-1">
@@ -228,7 +190,6 @@ function onChatKeydown(e: KeyboardEvent) {
           </div>
         </div>
 
-        <!-- 输入区 -->
         <div class="px-3 py-3 border-t border-white/10 shrink-0 flex gap-2">
           <input
             v-model="inputText"
@@ -270,5 +231,13 @@ function onChatKeydown(e: KeyboardEvent) {
 .chat-leave-to {
   opacity: 0;
   transform: translateY(12px) scale(0.95);
+}
+
+@keyframes float {
+  0%, 100% { transform: translate(-50%, 0); }
+  50% { transform: translate(-50%, -4px); }
+}
+.animate-float {
+  animation: float 3s ease-in-out infinite;
 }
 </style>

@@ -23,15 +23,35 @@ const imgEl = ref<HTMLImageElement>();
 let observer: IntersectionObserver | null = null;
 
 // ====== 缩略图 URL 自动生成 ======
-const displaySrc = computed(() => {
-  if (!props.thumbWidth) return props.src;
-  // 只对 img.hgl123.icu 的图片生成缩略图，跳过 data: / blob:
+// 优先用图床上传时预生成的 _thumb.webp（零 CPU），
+// 不存在时回退到 Nginx image_filter 实时 resize
+function thumbUrl(fallback = false): string {
+  if (!props.thumbWidth) return fallback ? "" : props.src;
   if (!props.src.includes("img.hgl123.icu")) return props.src;
+
+  // 去掉扩展名，拼 _thumb.webp
+  const base = props.src.replace(/\.[^.]+$/, "");
+  if (!fallback) return `${base}_thumb.webp`;
+
+  // 回退：Nginx /thumb/ 端点
   return props.src
     .replace("/i/", "/thumb/")
     .replace("/uploads/", "/thumb/")
     + `?w=${props.thumbWidth}`;
-});
+}
+
+const displaySrc = ref(thumbUrl());
+
+// error 处理：先回退到 /thumb/，两次都失败才显示错误
+function onImgError() {
+  const fallback = thumbUrl(true);
+  if (fallback && displaySrc.value !== fallback) {
+    displaySrc.value = fallback;
+    return;
+  }
+  error.value = true;
+  loaded.value = true;
+}
 
 // 动态过渡样式
 const imgStyle = computed(() => {
@@ -69,11 +89,6 @@ function onLoad() {
   loaded.value = true;
 }
 
-function onError() {
-  error.value = true;
-  loaded.value = true;
-}
-
 function onTransitionEnd() {
   if (imgEl.value) {
     imgEl.value.style.willChange = "auto";
@@ -108,7 +123,7 @@ function onTransitionEnd() {
       ]"
       :style="imgStyle"
       @load="onLoad"
-      @error="onError"
+      @error="onImgError"
       @transitionend="onTransitionEnd"
     />
 

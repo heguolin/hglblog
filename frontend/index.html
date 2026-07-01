@@ -9,15 +9,7 @@
   </head>
   <body>
     <div id="app"></div>
-    <!-- Cubism 2 全局变量 stub — pixi-live2d-display 模块顶层引用它们但不实际使用 -->
-    <script>
-      (function(){var L=function(){};L.prototype={updateParam:function(m,e){e.isFinished=function(){return!0}}};
-      window.Live2D={},window.Live2DMotion=L,window.Live2DExpression=L,
-      window.AMotion=L,window.PhysicsHair=L,window.Live2DModelWebGL=L,
-      window.Live2DModel=L,window.Live2DPartsParam=L,window.Live2DPhysics=L,
-      window.Live2DPose=L,window.Live2DEyeBlink=L,window.Live2DTransform=L})();
-    </script>
-    <!-- Cubism 4 Core SDK — .moc3 模型需要 -->
+    <!-- Cubism 4 Core SDK — .moc3 模型需要；必须在模块脚本之前同步加载，以便 window.Live2DCubismCore 就绪 -->
     <script src="/live2d/live2dcubismcore.min.js"></script>
     <script type="module" src="/src/main.ts"></script>
   </body>

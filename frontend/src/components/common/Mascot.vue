@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick } from "vue";
 import * as PIXI from "pixi.js";
-import { Live2DModel } from "pixi-live2d-display";
-import "pixi-live2d-display/cubism4"; // 注册 Cubism3/4 工厂（处理 .moc3 模型）
+// 只走 cubism4 子入口：该 bundle 不含 Cubism2 代码（无 PhysicsHair / SRC_TO_X），
+// 因此不会触发 "Cannot read properties of undefined (reading 'SRC_TO_X')"。
+// 它在模块求值时仅检查 window.Live2DCubismCore（由 index.html 的 script 标签提供）。
+import { Live2DModel } from "pixi-live2d-display/cubism4";
 import axios from "axios";
 
 // pixi-live2d-display 需要全局 PIXI（PIXI v6 有 EventEmitter）

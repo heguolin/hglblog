@@ -64,6 +64,10 @@ onMounted(async () => {
 
     app.stage.addChild(model as any);
 
+    // 让 Live2D 模型响应点击事件
+    model.interactive = true;
+    model.cursor = "pointer";
+
     // 点击打开聊天
     model.on("hit", () => {
       chatOpen.value = !chatOpen.value;
@@ -145,8 +149,8 @@ function onChatKeydown(e: KeyboardEvent) {
       </div>
     </Transition>
 
-    <!-- Live2D 容器 / CSS 降级（Live2D 加载时显示 CSS 角色） -->
-    <div ref="containerRef" class="relative w-[220px] h-[220px] cursor-pointer hover:scale-105 transition-transform duration-300 rounded-full" title="点击和流萤聊天">
+    <!-- Live2D 容器 / CSS 降级（点击兜底：Live2D hit 事件不可靠时也能打开聊天） -->
+    <div ref="containerRef" class="relative w-[220px] h-[220px] cursor-pointer hover:scale-105 transition-transform duration-300 rounded-full" title="点击和流萤聊天" @click="chatOpen = !chatOpen; bubbleOpen = false; if (chatOpen && messages.length === 0) messages.push({ role: 'assistant', content: '嗨…又见面啦。叫我「流萤」就好。今天想聊什么？' })">
       <!-- Live2D canvas 会覆盖在这里 -->
       <!-- CSS 降级角色（始终在底层，Live2D canvas 覆盖在上面） -->
       <div class="absolute inset-0 flex items-center justify-center">

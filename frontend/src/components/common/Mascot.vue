@@ -78,7 +78,8 @@ onMounted(async () => {
     // 默认表情
     (model as any).expression = 0;
   } catch (err) {
-    console.warn("Live2D 模型加载失败，使用 CSS 降级:", err);
+    console.warn("Live2D 模型加载失败:", err);
+    // CSS 降级角色自动显示（始终在模板中作为背景）
   }
 
   // 首次冒泡
@@ -98,7 +99,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   if (bubbleTimer) clearInterval(bubbleTimer);
-  if (app) app.destroy(true, { children: true });
+  if (app) app.destroy(true);
 });
 
 // ====== 聊天 ======
@@ -141,8 +142,16 @@ function onChatKeydown(e: KeyboardEvent) {
       </div>
     </Transition>
 
-    <!-- Live2D 容器 / CSS 降级 -->
-    <div ref="containerRef" class="w-[220px] h-[220px] cursor-pointer hover:scale-105 transition-transform duration-300 rounded-full overflow-hidden" title="点击和流萤聊天" />
+    <!-- Live2D 容器 / CSS 降级（Live2D 加载时显示 CSS 角色） -->
+    <div ref="containerRef" class="relative w-[220px] h-[220px] cursor-pointer hover:scale-105 transition-transform duration-300 rounded-full" title="点击和流萤聊天">
+      <!-- Live2D canvas 会覆盖在这里 -->
+      <!-- CSS 降级角色（始终在底层，Live2D canvas 覆盖在上面） -->
+      <div class="absolute inset-0 flex items-center justify-center">
+        <div class="w-[140px] h-[140px] rounded-full bg-gradient-to-b from-accent-purple/20 via-accent-pink/15 to-accent-blue/10 border border-white/10 animate-pulse flex items-center justify-center text-5xl">
+          🌸
+        </div>
+      </div>
+    </div>
 
     <!-- ====== 聊天对话框 ====== -->
     <Transition name="chat">

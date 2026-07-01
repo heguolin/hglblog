@@ -9,8 +9,13 @@
   </head>
   <body>
     <div id="app"></div>
-    <!-- pixi-live2d-display 模块顶层检查 window.Live2D，不设就抛错 -->
-    <script>window.Live2D = {}</script>
+    <!-- pixi-live2d-display 模块顶层引用 Cubism2 全局变量（库的 bug），提供 stub -->
+    <script>
+      window.Live2D = {};
+      window.Live2DMotion = { prototype: { updateParam: function(model, entry) { entry.isFinished = function(){return true} } } };
+      window.Live2DExpression = function() {};
+      window.AMotion = function() {};
+    </script>
     <!-- Live2D Cubism 4 Core SDK（设置全局 Live2DCubismCore） -->
     <script src="/live2d/live2dcubismcore.min.js"></script>
     <script type="module" src="/src/main.ts"></script>

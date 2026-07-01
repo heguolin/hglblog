@@ -47,6 +47,15 @@ onMounted(async () => {
   });
   containerRef.value.appendChild(app.view as HTMLCanvasElement);
 
+  // 动态加载 Cubism4 桥（需要全局 PIXI + Live2DCubismCore，两者此时已就位）
+  await new Promise<void>((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = "/live2d/cubism4.runtime.min.js";
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error("cubism4 运行时加载失败"));
+    document.head.appendChild(s);
+  }).catch((err) => console.warn(err));
+
   try {
     const model = await Live2DModel.from("/live2d/cat.model3.json");
 

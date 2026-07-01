@@ -149,23 +149,16 @@ function onChatKeydown(e: KeyboardEvent) {
       </div>
     </Transition>
 
-    <!-- Live2D 容器 / CSS 降级（点击兜底：Live2D hit 事件不可靠时也能打开聊天） -->
+    <!-- Live2D 容器（点击打开聊天） -->
     <div ref="containerRef" class="relative w-[220px] h-[220px] cursor-pointer hover:scale-105 transition-transform duration-300 rounded-full" title="点击和流萤聊天" @click="chatOpen = !chatOpen; bubbleOpen = false; if (chatOpen && messages.length === 0) messages.push({ role: 'assistant', content: '嗨…又见面啦。叫我「流萤」就好。今天想聊什么？' })">
-      <!-- Live2D canvas 会覆盖在这里 -->
-      <!-- CSS 降级角色（始终在底层，Live2D canvas 覆盖在上面） -->
-      <div class="absolute inset-0 flex items-center justify-center">
-        <div class="w-[140px] h-[140px] rounded-full bg-gradient-to-b from-accent-purple/20 via-accent-pink/15 to-accent-blue/10 border border-white/10 animate-pulse flex items-center justify-center text-5xl">
-          🌸
-        </div>
-      </div>
     </div>
 
     <!-- ====== 聊天对话框 ====== -->
     <Transition name="chat">
       <div
         v-if="chatOpen"
-        class="absolute bottom-[230px] left-0 w-[340px] rounded-2xl flex flex-col overflow-hidden shadow-2xl shadow-black/40 border border-white/10"
-        style="height:420px;background:rgba(15,12,41,0.94)"
+        class="absolute bottom-0 left-[240px] w-[300px] rounded-2xl flex flex-col overflow-hidden shadow-2xl shadow-black/40 border border-white/10"
+        style="height:360px;background:rgba(15,12,41,0.94)"
       >
         <div class="flex items-center justify-between px-4 py-3 border-b border-white/10 shrink-0">
           <div class="flex items-center gap-2">

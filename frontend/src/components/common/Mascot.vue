@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted, nextTick } from "vue";
 import * as PIXI from "pixi.js";
 import { Live2DModel } from "pixi-live2d-display";
+import "pixi-live2d-display/cubism4"; // 注册 Cubism3/4 工厂（处理 .moc3 模型）
 import axios from "axios";
 
 // pixi-live2d-display 需要全局 PIXI（PIXI v6 有 EventEmitter）
@@ -46,15 +47,6 @@ onMounted(async () => {
     autoDensity: true,
   });
   containerRef.value.appendChild(app.view as HTMLCanvasElement);
-
-  // 动态加载 Cubism4 桥（需要全局 PIXI + Live2DCubismCore，两者此时已就位）
-  await new Promise<void>((resolve, reject) => {
-    const s = document.createElement("script");
-    s.src = "/live2d/cubism4.runtime.min.js";
-    s.onload = () => resolve();
-    s.onerror = () => reject(new Error("cubism4 运行时加载失败"));
-    document.head.appendChild(s);
-  }).catch((err) => console.warn(err));
 
   try {
     const model = await Live2DModel.from("/live2d/cat.model3.json");

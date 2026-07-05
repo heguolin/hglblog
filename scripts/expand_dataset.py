@@ -98,7 +98,7 @@ def expand(output_path: str, dialogue_path: str = None, extra_count: int = 80):
     # 追加额外日常对话
     for instruction, output in EXTRA_DAILY:
         existing.append({
-            "instruction": f"{PERSONA_PREFIX}{instruction}",
+            "instruction": instruction,
             "input": "",
             "output": output,
             "history": [],
@@ -116,7 +116,7 @@ def expand(output_path: str, dialogue_path: str = None, extra_count: int = 80):
                 continue
             q = random.choice(USER_QUESTIONS)
             existing.append({
-                "instruction": f"{PERSONA_PREFIX}{q}",
+                "instruction": q,
                 "input": "",
                 "output": line,
                 "history": [],

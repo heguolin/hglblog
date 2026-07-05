@@ -385,25 +385,23 @@ def generate_dialogue_dataset(output_path: str, dialogue_path: str = None):
     # 手写对话
     for instruction, output in HANDCRAFTED_DIALOGUES:
         entries.append({
-            "instruction": f"{PERSONA_PREFIX}{instruction}",
+            "instruction": instruction,
             "input": "",
             "output": output,
             "history": [],
         })
 
-    # 游戏台词: 150条
+    # 游戏台词: 全部（~450条）
     if dialogue_path and Path(dialogue_path).exists():
         quotes = extract_game_quotes(dialogue_path)
         random.shuffle(quotes)
         count = 0
         for quote in quotes:
-            if count >= 150:
-                break
-            if len(quote) < 7:
+            if len(quote) < 5:
                 continue
             q = random.choice(USER_PROMPTS_FOR_QUOTES)
             entries.append({
-                "instruction": f"{PERSONA_PREFIX}{q}",
+                "instruction": q,
                 "input": "",
                 "output": quote,
                 "history": [],
@@ -473,7 +471,7 @@ def generate_dialogue_dataset(output_path: str, dialogue_path: str = None):
         for i, (q, a) in enumerate(group):
             if i == 0:
                 entries.append({
-                    "instruction": f"{PERSONA_PREFIX}{q}",
+                    "instruction": q,
                     "input": "",
                     "output": a,
                     "history": [],
@@ -481,7 +479,7 @@ def generate_dialogue_dataset(output_path: str, dialogue_path: str = None):
                 history.append([q, a])
             else:
                 entries.append({
-                    "instruction": f"{PERSONA_PREFIX}{q}",
+                    "instruction": q,
                     "input": "",
                     "output": a,
                     "history": [list(pair) for pair in history],

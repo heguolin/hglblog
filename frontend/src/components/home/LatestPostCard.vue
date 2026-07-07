@@ -56,7 +56,7 @@ onMounted(async () => {
       <div v-if="post.category" class="absolute top-4 left-4">
         <span
           class="glass rounded-full px-3 py-1 text-[12px] text-white font-medium backdrop-blur-md"
-          :style="{ borderColor: post.category.color || 'rgba(255,255,255,0.15)' }"
+          :style="{ borderColor: post.category.color || 'rgba(255,248,240,0.15)' }"
         >
           {{ post.category.icon }} {{ post.category.name }}
         </span>

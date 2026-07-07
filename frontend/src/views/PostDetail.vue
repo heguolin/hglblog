@@ -165,7 +165,7 @@ watch(() => route.params.slug, (newSlug) => {
               v-for="tag in post.tags"
               :key="tag.id"
               class="px-3 py-1 text-xs rounded-full border cursor-pointer hover:bg-white/10 transition-colors"
-              :style="{ borderColor: tag.color || 'rgba(255,255,255,0.2)', color: tag.color || 'rgba(255,255,255,0.6)' }"
+              :style="{ borderColor: tag.color || 'rgba(255,248,240,0.2)', color: tag.color || 'rgba(255,248,240,0.6)' }"
               @click="router.push(`/archive?tag=${tag.slug}`)"
             >
               #{{ tag.name }}
@@ -281,7 +281,7 @@ watch(() => route.params.slug, (newSlug) => {
 /* 注意：不带 scoped，确保作用于 v-html 渲染的内容 */
 
 .post-content {
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 248, 240, 0.78);
   line-height: 1.85;
   font-size: 15px;
   word-break: break-word;
@@ -293,8 +293,8 @@ watch(() => route.params.slug, (newSlug) => {
   margin: 1.8em 0 0.6em;
   line-height: 1.3;
 }
-.post-content h1 { font-size: 1.8em; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.3em; }
-.post-content h2 { font-size: 1.5em; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.25em; }
+.post-content h1 { font-size: 1.8em; border-bottom: 1px solid rgba(255,248,240,0.1); padding-bottom: 0.3em; }
+.post-content h2 { font-size: 1.5em; border-bottom: 1px solid rgba(255,248,240,0.08); padding-bottom: 0.25em; }
 .post-content h3 { font-size: 1.25em; }
 .post-content h4 { font-size: 1.1em; }
 
@@ -315,7 +315,7 @@ watch(() => route.params.slug, (newSlug) => {
 /* 代码块 — 深色实底 + 提 z-index 防粒子遮挡 */
 .post-content pre.hljs {
   background: rgba(15, 17, 23, 0.94) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 248, 240, 0.1);
   border-radius: 0.75rem;
   padding: 1.2em 1.4em;
   overflow-x: auto;
@@ -343,11 +343,11 @@ watch(() => route.params.slug, (newSlug) => {
 .post-content .hljs-attr { color: #22d3ee; }
 .post-content .hljs-variable { color: #ff6b9d; }
 .post-content .hljs-literal { color: #ff6b9d; }
-.post-content .hljs-punctuation { color: rgba(255,255,255,0.5); }
+.post-content .hljs-punctuation { color: rgba(255,248,240,0.5); }
 
 /* 行内代码 */
 .post-content :not(pre) > code {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 248, 240, 0.08);
   color: #ff6b9d;
   padding: 2px 6px;
   border-radius: 4px;
@@ -362,7 +362,7 @@ watch(() => route.params.slug, (newSlug) => {
   margin: 1em 0;
   background: rgba(192, 132, 252, 0.06);
   border-radius: 0 0.5rem 0.5rem 0;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 248, 240, 0.6);
 }
 
 /* 列表 */
@@ -374,7 +374,7 @@ watch(() => route.params.slug, (newSlug) => {
   margin: 0.3em 0;
 }
 .post-content li::marker {
-  color: rgba(255, 255, 255, 0.3);
+  color: rgba(255, 248, 240, 0.3);
 }
 
 /* 表格 */
@@ -384,12 +384,12 @@ watch(() => route.params.slug, (newSlug) => {
   margin: 1em 0;
 }
 .post-content th, .post-content td {
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 248, 240, 0.1);
   padding: 0.6em 1em;
   text-align: left;
 }
 .post-content th {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 248, 240, 0.06);
   color: #ffffff;
   font-weight: 600;
 }
@@ -397,7 +397,7 @@ watch(() => route.params.slug, (newSlug) => {
 /* 分割线 */
 .post-content hr {
   border: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(255, 248, 240, 0.08);
   margin: 2em 0;
 }
 

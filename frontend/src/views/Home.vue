@@ -34,12 +34,11 @@ onMounted(() => {
         <MusicCard />
       </div>
 
-      <!-- Row 2: LatestPostCard(8)  |  PhotoEntryCard(4)
-           文章卡扩到 8 列成为页面最强视觉锚点 -->
-      <div class="bento-card col-span-1 md:col-span-3 lg:col-span-8">
+      <!-- Row 2: LatestPostCard(7)  |  PhotoEntryCard(5) -->
+      <div class="bento-card col-span-1 md:col-span-3 lg:col-span-7">
         <LatestPostCard />
       </div>
-      <div class="bento-card col-span-1 md:col-span-3 lg:col-span-4">
+      <div class="bento-card col-span-1 md:col-span-3 lg:col-span-5">
         <PhotoEntryCard />
       </div>
 

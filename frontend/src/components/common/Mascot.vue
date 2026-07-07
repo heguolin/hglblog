@@ -192,8 +192,7 @@ function onChatKeydown(e: KeyboardEvent) {
             v-model="inputText"
             type="text"
             placeholder="说点什么..."
-            class="flex-1 rounded-xl px-4 py-2.5 text-white text-sm placeholder:text-white/30 outline-none border border-white/10 focus:border-accent-pink/50 transition-colors"
-            style="background:rgba(255,255,255,0.06)"
+            class="flex-1 rounded-xl px-4 py-2.5 text-white text-sm placeholder:text-white/30 outline-none border border-white/10 focus:border-accent-pink/50 transition-colors glass"
             @keydown="onChatKeydown"
             :disabled="sending"
           />

@@ -1,56 +1,82 @@
 @import "tailwindcss";
 
 /* ====== 全站统一设计规范 ======
-   原型参考: xinghuisama.top
-   配色: CLAUDE.md 自有强调色系
-   卡片: 圆角 1rem / 毛玻璃两层 / hover 上浮 4px
+   设计系统: DESIGN.md — Warm Hearth × Glass (暖炉 × 玻璃)
+   毛玻璃: 微暖底调 rgba(255,248,240,…) 代替纯白，像暖色灯光打在玻璃家具上
+   强调色: 紫(品牌) / 粉(社交) / 蓝(链接) / 青(元数据) — 各有语义角色，不混用
+   卡片: 圆角 18px / 双层边框 / hover 上浮 4px + 紫色辉光
    间距: page py-6 lg:py-10 / card p-5 md:p-6 / grid gap-5
    排版: subtitle 标签 11px tracking / title 16-18px bold / body 13px / meta 12px
 */
 
 @theme {
-  /* 强调色（自有色系） */
-  --color-accent-pink: #ff6b9d;
-  --color-accent-purple: #c084fc;
-  --color-accent-blue: #60a5fa;
-  --color-accent-cyan: #22d3ee;
-  /* 背景渐变 */
+  /* 强调色 — 语义角色，不可混用 */
+  --color-accent-pink: #ff6b9d;    /* 社交温度: 点赞/留言/友链 */
+  --color-accent-purple: #c084fc;  /* 品牌身份: logo/CTA/选中态 */
+  --color-accent-blue: #60a5fa;    /* 信息链接: hover/聚焦环 */
+  --color-accent-cyan: #22d3ee;    /* 系统元数据: 标签/代码/时间戳 */
+  /* 状态色 */
+  --color-ok: #22d3ee;
+  --color-warn: #fbbf24;
+  --color-danger: #fb7185;
+  /* 背景渐变 — 暗色房间墙壁 */
   --color-bg-start: #0f0c29;
   --color-bg-mid1: #302b63;
   --color-bg-mid2: #24243e;
   --color-bg-end: #1a1a2e;
-  /* 文字 */
+  /* 文字 — 微暖白，不是纯白 */
   --color-text-primary: #ffffff;
-  --color-text-secondary: rgba(255, 255, 255, 0.7);
-  --color-text-muted: rgba(255, 255, 255, 0.4);
-  /* 毛玻璃 */
-  --glass-bg: rgba(255, 255, 255, 0.06);
-  --glass-bg-strong: rgba(255, 255, 255, 0.1);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-border-strong: rgba(255, 255, 255, 0.15);
+  --color-text-secondary: rgba(255, 248, 240, 0.78);
+  --color-text-muted: rgba(255, 248, 240, 0.45);
+  /* 毛玻璃 — 微暖底调 (255,248,240) 代替纯白 (255,255,255) */
+  --glass-bg: rgba(255, 248, 240, 0.06);
+  --glass-bg-strong: rgba(255, 248, 240, 0.10);
+  --glass-border: rgba(255, 248, 240, 0.12);
+  --glass-border-strong: rgba(255, 248, 240, 0.22);
   --glass-blur: 20px;
   --glass-blur-strong: 30px;
-  /* 圆角 */
+  /* 圆角 — 层次分明 */
   --radius-card: 1rem;
   --radius-lg: 0.75rem;
   --radius-md: 0.5rem;
+  --radius-sm: 0.375rem;
   --radius-full: 9999px;
 }
 
-/* ====== 毛玻璃卡片 ====== */
+/* ====== 毛玻璃卡片 ======
+   双层边框设计: 外边框 0.12 opacity + 内边框 0.22 opacity
+   顶部高光 inset 模拟灯光打在玻璃边缘的效果
+   微暖底调让玻璃像暖色灯光下的家具，不是冷冰冰的实验室 */
 .glass {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 248, 240, 0.06);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 248, 240, 0.12);
+  position: relative;
+}
+.glass::before {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  border: 1px solid rgba(255, 248, 240, 0.22);
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 248, 240, 0.04) 0%, transparent 40%);
 }
 
 .glass-strong {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 248, 240, 0.10);
   backdrop-filter: blur(30px) saturate(180%);
   -webkit-backdrop-filter: blur(30px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 248, 240, 0.15);
+  position: relative;
+}
+.glass-strong::before {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  border: 1px solid rgba(255, 248, 240, 0.22);
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 248, 240, 0.06) 0%, transparent 50%);
 }
 
 /* ====== 卡片交互 ====== */
@@ -63,7 +89,7 @@
 }
 .card-hover:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 8px 32px rgba(192, 132, 252, 0.12), 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 /* ====== 全站排版工具类 ====== */

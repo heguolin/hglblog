@@ -33,5 +33,38 @@ services:
       IMG_PASSWORD: ${IMG_PASSWORD}
       ICP_BEIAN: ${ICP_BEIAN}
 
+  # ===== RAG 系统（Phase 1）=====
+  milvus:
+    image: milvusdb/milvus:v2.5.0
+    container_name: blog-milvus
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:19530:19530"
+      - "127.0.0.1:9091:9091"
+    environment:
+      ETCD_USE_EMBED: "true"
+      MINIO_USE_EMBED: "true"
+    volumes:
+      - milvus_data:/var/lib/milvus
+    mem_limit: 1g
+
+  rag-service:
+    build: ./rag-service
+    container_name: blog-rag
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8002:8002"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - milvus
+    environment:
+      MILVUS_HOST: milvus
+      MILVUS_PORT: "19530"
+      LLM_BASE_URL: http://host.docker.internal:8001/v1
+      DATABASE_URL: postgresql://postgres:${DB_PASSWORD}@postgres:5432/blog
+    mem_limit: 512m
+
 volumes:
   postgres_data:
+  milvus_data:

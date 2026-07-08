@@ -1,12 +1,16 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { RagService } from "../rag/rag.service";
 import { CreatePostDto } from "./dto/create-post.dto";
 import { UpdatePostDto } from "./dto/update-post.dto";
 import { QueryPostDto } from "./dto/query-post.dto";
 
 @Injectable()
 export class PostsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private rag: RagService,
+  ) {}
 
   private readingTime(content: string): number {
     const wordsPerMinute = 200;
@@ -77,7 +81,7 @@ export class PostsService {
 
   async create(dto: CreatePostDto, authorId: number) {
     const { tagIds, ...data } = dto;
-    return this.prisma.post.create({
+    const post = await this.prisma.post.create({
       data: {
         ...data,
         readingTime: this.readingTime(data.content),
@@ -86,6 +90,8 @@ export class PostsService {
       },
       include: { category: true, tags: { include: { tag: true } } },
     });
+    this.rag.reindex("post", post.id);
+    return post;
   }
 
   async update(id: number, dto: UpdatePostDto) {
@@ -98,7 +104,7 @@ export class PostsService {
       await this.prisma.postTag.deleteMany({ where: { postId: id } });
     }
 
-    return this.prisma.post.update({
+    const post = await this.prisma.post.update({
       where: { id },
       data: {
         ...updateData,
@@ -106,10 +112,14 @@ export class PostsService {
       },
       include: { category: true, tags: { include: { tag: true } } },
     });
+    this.rag.reindex("post", id);
+    return post;
   }
 
   async delete(id: number) {
     await this.prisma.post.findUniqueOrThrow({ where: { id } });
-    return this.prisma.post.delete({ where: { id } });
+    const post = await this.prisma.post.delete({ where: { id } });
+    this.rag.reindex("post", id);
+    return post;
   }
 }

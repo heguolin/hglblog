@@ -1,10 +1,14 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { RagService } from "../rag/rag.service";
 import { CreateChatterDto } from "./dto/create-chatter.dto";
 
 @Injectable()
 export class ChattersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private rag: RagService,
+  ) {}
 
   async findAll(tag?: string) {
     const where: Record<string, unknown> = {};
@@ -38,14 +42,18 @@ export class ChattersService {
   }
 
   async create(dto: CreateChatterDto, authorId: number) {
-    return this.prisma.chatter.create({
+    const chatter = await this.prisma.chatter.create({
       data: { ...dto, authorId },
       include: { author: { select: { id: true, username: true, avatar: true } } },
     });
+    this.rag.reindex("chatter", chatter.id);
+    return chatter;
   }
 
   async delete(id: number) {
     await this.prisma.chatter.findUniqueOrThrow({ where: { id } });
-    return this.prisma.chatter.delete({ where: { id } });
+    const chatter = await this.prisma.chatter.delete({ where: { id } });
+    this.rag.reindex("chatter", id);
+    return chatter;
   }
 }

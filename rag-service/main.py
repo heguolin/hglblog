@@ -49,6 +49,23 @@ app = FastAPI(
 app.include_router(chat_router)
 
 
+from pydantic import BaseModel
+
+
+class ReindexRequest(BaseModel):
+    source_type: str  # "post" | "chatter"
+    source_id: int
+
+
+@app.post("/api/rag/reindex")
+async def reindex(request: ReindexRequest):
+    """增量索引 Webhook — NestJS 在文章/杂谈变更时调用。"""
+    import asyncio
+    from ingestion.indexer import run_incremental
+    asyncio.create_task(run_incremental(request.source_type, request.source_id))
+    return {"status": "accepted"}
+
+
 @app.get("/health")
 async def health():
     return {"status": "ok", "service": "firefly-rag"}

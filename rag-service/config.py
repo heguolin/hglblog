@@ -35,7 +35,7 @@ class Settings:
   database_url: str = "postgresql://postgres:blog123456@localhost:5432/blog"
 
   def __post_init__(self):
-    for key in self.__annotations__:
+    for key in self.__dataclass_fields__:
       env_val = os.getenv(key.upper())
       if env_val is not None:
         target_type = type(getattr(self, key))

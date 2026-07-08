@@ -34,3 +34,12 @@ npm-debug.log*
 # 上传临时文件
 backend/uploads/
 .gstack/
+
+# Python
+__pycache__/
+rag-service/__pycache__/
+*.pyc
+
+# RAG
+milvus_data/
+.superpowers/

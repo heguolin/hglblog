@@ -15,7 +15,8 @@ class Settings:
   milvus_port: int = 19530
   milvus_collection: str = "blog_knowledge"
 
-  # Embedding
+  # Embedding — EMBEDDING_MODEL 可设为模型名（需联网）或本地路径
+  # 国内服务器用法: EMBEDDING_MODEL=/app/models/bge-small-zh
   embedding_model: str = "BAAI/bge-small-zh"
   embedding_dim: int = 512
 

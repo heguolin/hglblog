@@ -42,4 +42,5 @@ rag-service/__pycache__/
 
 # RAG
 milvus_data/
+rag-service/models/
 .superpowers/

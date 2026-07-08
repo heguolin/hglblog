@@ -60,6 +60,8 @@ services:
     restart: unless-stopped
     ports:
       - "127.0.0.1:8002:8002"
+    volumes:
+      - ./rag-service/models:/app/models:ro   # 本地模型目录（离线部署用）
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
@@ -70,6 +72,7 @@ services:
       MILVUS_PORT: "19530"
       LLM_BASE_URL: http://host.docker.internal:8001/v1
       DATABASE_URL: postgresql://postgres:${DB_PASSWORD}@postgres:5432/blog
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-/app/models/bge-small-zh}
     mem_limit: 512m
     healthcheck:
       test: python -c "import urllib.request; exit(0 if urllib.request.urlopen('http://localhost:8002/health').status == 200 else 1)" || exit 1

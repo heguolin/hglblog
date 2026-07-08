@@ -1,11 +1,14 @@
 """RAG 管线编排 — 检索→注入→调用，含降级逻辑。"""
 
-from typing import List
+import logging
+from typing import List, Optional
 from services.embedding import EmbeddingService
 from services.retriever import Retriever
 from services.llm_client import LlmClient
 from schemas.chat import ChatMessage, ChatResponse
 from config import settings
+
+logger = logging.getLogger("rag.pipeline")
 
 
 class RagPipeline:
@@ -19,11 +22,18 @@ class RagPipeline:
         self._retriever = retriever
         self._llm = llm
 
-    async def run(self, messages: List[ChatMessage]) -> ChatResponse:
+    async def run(
+        self,
+        messages: List[ChatMessage],
+        temperature: float = 0.7,
+        max_tokens: int = 1024,
+    ) -> ChatResponse:
         """处理聊天请求：检索知识 → 注入上下文 → 调用模型。
 
         Args:
             messages: 对话历史（含 system prompt 和 user messages）。
+            temperature: 生成温度。
+            max_tokens: 最大生成长度。
 
         Returns:
             模型回复或降级回复。
@@ -31,21 +41,28 @@ class RagPipeline:
         # 1. 提取最后一条用户消息
         user_messages = [m for m in messages if m.role == "user"]
         if not user_messages:
-            return await self._llm.chat(messages)
+            return await self._llm.chat(messages, temperature=temperature, max_tokens=max_tokens)
 
         last_user = user_messages[-1].content.strip()
 
         # 2. 短消息跳过检索
         if len(last_user) < settings.retrieval_skip_min_chars:
-            return await self._llm.chat(messages)
+            logger.debug("Skipping retrieval: query too short (%d chars)", len(last_user))
+            return await self._llm.chat(messages, temperature=temperature, max_tokens=max_tokens)
 
         # 3. 检索
         try:
             vector = self._embedding.encode([last_user])[0]
             docs = self._retriever.search(vector)
-        except Exception:
+            logger.info(
+                "Retrieval — query=%.100s results=%d scores=%s",
+                last_user, len(docs),
+                [f"{d.get('score', 0):.4f}" for d in docs],
+            )
+        except Exception as e:
+            logger.warning("Retrieval failed (%s: %s) — falling back to bare chat", type(e).__name__, e)
             # 检索失败 → 降级为裸聊天
-            return await self._llm.chat(messages)
+            return await self._llm.chat(messages, temperature=temperature, max_tokens=max_tokens)
 
         # 4. 注入上下文到 system message
         if docs:
@@ -54,7 +71,7 @@ class RagPipeline:
             augmented = messages
 
         # 5. 调用模型
-        return await self._llm.chat(augmented)
+        return await self._llm.chat(augmented, temperature=temperature, max_tokens=max_tokens)
 
     # ---------- 内部方法 ----------
 

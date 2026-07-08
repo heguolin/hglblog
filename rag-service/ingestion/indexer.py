@@ -8,11 +8,17 @@
 
 import sys
 import asyncio
+import logging
 import asyncpg
+from typing import Optional
 from config import settings
 from services.embedding import EmbeddingService
 from services.retriever import Retriever
 from ingestion.chunker import chunk_text
+
+logger = logging.getLogger("rag.indexer")
+
+VALID_SOURCE_TYPES = {"post", "chatter"}
 
 
 async def fetch_posts(pg: asyncpg.Connection) -> list:
@@ -40,6 +46,11 @@ async def fetch_chatters(pg: asyncpg.Connection) -> list:
 
 async def fetch_single(pg: asyncpg.Connection, source_type: str, source_id: int) -> dict | None:
     """读取单条记录。"""
+    if source_type not in VALID_SOURCE_TYPES:
+        raise ValueError(
+            f"Invalid source_type '{source_type}'. Must be one of {VALID_SOURCE_TYPES}"
+        )
+
     table = "posts" if source_type == "post" else "chatters"
     row = await pg.fetchrow(
         f"""
@@ -56,23 +67,24 @@ async def fetch_single(pg: asyncpg.Connection, source_type: str, source_id: int)
     return (source_type, dict(row))
 
 
-async def run_full(recreate: bool = False):
+async def run_full(recreate: bool = False, embedding: Optional[EmbeddingService] = None):
     """全量入库：读取所有文章和杂谈 → 分块 → embedding → Milvus。"""
-    print("[indexer] Loading embedding model...")
-    embedding = EmbeddingService()
-    embedding.load_model()
+    if embedding is None:
+        logger.info("Loading embedding model...")
+        embedding = EmbeddingService()
+        embedding.load_model()
 
-    print("[indexer] Connecting to Milvus...")
+    logger.info("Connecting to Milvus...")
     retriever = Retriever()
     retriever.connect()
     retriever.create_collection(drop_existing=recreate)
-    print("[indexer] Collection ready.")
+    logger.info("Collection ready.")
 
-    print("[indexer] Connecting to PostgreSQL...")
+    logger.info("Connecting to PostgreSQL...")
     pg = await asyncpg.connect(settings.database_url)
 
     items = await fetch_posts(pg) + await fetch_chatters(pg)
-    print(f"[indexer] Found {len(items)} items to index.")
+    logger.info("Found %d items to index.", len(items))
 
     batch_size = 32
     total_chunks = 0
@@ -99,18 +111,27 @@ async def run_full(recreate: bool = False):
         if batch_data:
             retriever.insert(batch_data)
             total_chunks += len(batch_data)
-        print(f"[indexer] Progress: {min(i + batch_size, len(items))}/{len(items)} — {total_chunks} chunks")
+        logger.info(
+            "Progress: %d/%d — %d chunks",
+            min(i + batch_size, len(items)), len(items), total_chunks,
+        )
 
     await pg.close()
-    print(f"[indexer] Done. Total {total_chunks} chunks indexed.")
+    logger.info("Done. Total %d chunks indexed.", total_chunks)
 
 
-async def run_incremental(source_type: str, source_id: int):
+async def run_incremental(
+    source_type: str,
+    source_id: int,
+    embedding: Optional[EmbeddingService] = None,
+):
     """增量更新：删除旧 chunks → 重新分块入库。"""
-    print(f"[indexer] Incremental update: {source_type}#{source_id}")
+    logger.info("Incremental update: %s#%d", source_type, source_id)
 
-    embedding = EmbeddingService()
-    embedding.load_model()
+    if embedding is None:
+        logger.info("Loading embedding model...")
+        embedding = EmbeddingService()
+        embedding.load_model()
 
     retriever = Retriever()
     retriever.connect()
@@ -119,7 +140,7 @@ async def run_incremental(source_type: str, source_id: int):
     pg = await asyncpg.connect(settings.database_url)
     item = await fetch_single(pg, source_type, source_id)
     if item is None:
-        print(f"[indexer] Source {source_type}#{source_id} not found — deleting existing chunks.")
+        logger.info("Source %s#%d not found — deleting existing chunks.", source_type, source_id)
         retriever.delete_by_source(source_type, source_id)
         await pg.close()
         return
@@ -144,9 +165,9 @@ async def run_incremental(source_type: str, source_id: int):
                 "created_at": data["created_at"] or 0,
             })
         retriever.insert(batch)
-        print(f"[indexer] Indexed {len(batch)} chunks for {source_type}#{source_id}")
+        logger.info("Indexed %d chunks for %s#%d", len(batch), source_type, source_id)
     else:
-        print(f"[indexer] No content to index for {source_type}#{source_id}")
+        logger.info("No content to index for %s#%d", source_type, source_id)
 
     await pg.close()
 
@@ -158,6 +179,11 @@ def print_usage():
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
+    )
+
     args = sys.argv[1:]
 
     if "--full" in args:

@@ -47,6 +47,12 @@ services:
     volumes:
       - milvus_data:/var/lib/milvus
     mem_limit: 1g
+    healthcheck:
+      test: curl -sf http://localhost:9091/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   rag-service:
     build: ./rag-service
@@ -57,13 +63,20 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
-      - milvus
+      milvus:
+        condition: service_healthy
     environment:
       MILVUS_HOST: milvus
       MILVUS_PORT: "19530"
       LLM_BASE_URL: http://host.docker.internal:8001/v1
       DATABASE_URL: postgresql://postgres:${DB_PASSWORD}@postgres:5432/blog
     mem_limit: 512m
+    healthcheck:
+      test: python -c "import urllib.request; exit(0 if urllib.request.urlopen('http://localhost:8002/health').status == 200 else 1)" || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
 volumes:
   postgres_data:

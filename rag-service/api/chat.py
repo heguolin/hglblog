@@ -1,8 +1,13 @@
 """OpenAI 兼容聊天接口 — 接收请求 → 调 RAG pipeline → 返回响应。"""
 
+import logging
+import time
+
 from fastapi import APIRouter, HTTPException
 from schemas.chat import ChatRequest, ChatResponse
 from rag.pipeline import RagPipeline
+
+logger = logging.getLogger("rag.api.chat")
 
 router = APIRouter(tags=["chat"])
 
@@ -27,7 +32,20 @@ async def chat_completions(request: ChatRequest):
     if _pipeline is None:
         raise HTTPException(status_code=503, detail="RAG pipeline not initialized")
 
+    start = time.monotonic()
     try:
-        return await _pipeline.run(request.messages)
+        response = await _pipeline.run(
+            request.messages,
+            temperature=request.temperature,
+            max_tokens=request.max_tokens,
+        )
+        elapsed = time.monotonic() - start
+        logger.info(
+            "Request completed — messages=%d temperature=%.2f max_tokens=%d elapsed=%.2fs",
+            len(request.messages), request.temperature, request.max_tokens, elapsed,
+        )
+        return response
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
+        elapsed = time.monotonic() - start
+        logger.exception("Chat request failed after %.2fs: %s: %s", elapsed, type(e).__name__, e)
+        raise HTTPException(status_code=500, detail="Internal server error")

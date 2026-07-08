@@ -1,4 +1,4 @@
-"""博客知识入库管线 — PostgreSQL → 分块 → Embedding → Milvus。
+"""博客知识入库管线 — PostgreSQL → 分块 → Embedding → Chroma。
 
 用法:
   python -m ingestion.indexer --full              # 全量入库

@@ -41,6 +41,6 @@ rag-service/__pycache__/
 *.pyc
 
 # RAG
-milvus_data/
+chroma_data/
 rag-service/models/
 .superpowers/

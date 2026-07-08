@@ -21,8 +21,7 @@ _embedding: EmbeddingService | None = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """启动：加载模型 + 连接 Milvus + 初始化 pipeline。
-       关闭：释放资源。"""
+    """启动：加载模型 + 初始化 Chroma + 初始化 pipeline。"""
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
@@ -36,20 +35,11 @@ async def lifespan(app: FastAPI):
     _embedding = embedding
     logger.info("Embedding model loaded.")
 
-    logger.info(
-        "Connecting to Milvus at %s:%s...",
-        settings.milvus_host, settings.milvus_port,
-    )
+    logger.info("Connecting to Chroma (in-process)...")
     retriever = Retriever()
-    try:
-        retriever.connect()
-        retriever.create_collection(drop_existing=False)
-        logger.info("Milvus connected and collection ready.")
-    except Exception as e:
-        logger.warning(
-            "Milvus unavailable (%s: %s) — RAG will run in pass-through mode.",
-            type(e).__name__, e,
-        )
+    retriever.connect()
+    retriever.create_collection(drop_existing=False)
+    logger.info("Chroma ready (data: %s).", settings.chroma_persist_path)
 
     llm = LlmClient()
     pipeline = RagPipeline(embedding, retriever, llm)

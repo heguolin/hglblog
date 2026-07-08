@@ -34,26 +34,7 @@ services:
       ICP_BEIAN: ${ICP_BEIAN}
 
   # ===== RAG 系统（Phase 1）=====
-  milvus:
-    image: milvusdb/milvus:v2.5.0
-    container_name: blog-milvus
-    restart: unless-stopped
-    ports:
-      - "127.0.0.1:19530:19530"
-      - "127.0.0.1:9091:9091"
-    environment:
-      ETCD_USE_EMBED: "true"
-      MINIO_USE_EMBED: "true"
-    volumes:
-      - milvus_data:/var/lib/milvus
-    mem_limit: 1g
-    healthcheck:
-      test: ["CMD", "wget", "-q", "-O-", "http://localhost:9091/healthz"]
-      interval: 30s
-      timeout: 10s
-      retries: 10
-      start_period: 120s
-
+  # Chroma 在 rag-service 容器内进程运行，无需独立向量数据库服务
   rag-service:
     build: ./rag-service
     container_name: blog-rag
@@ -61,26 +42,23 @@ services:
     ports:
       - "127.0.0.1:8002:8002"
     volumes:
-      - ./rag-service/models:/app/models:ro   # 本地模型目录（离线部署用）
+      - ./rag-service/models:/app/models:ro    # 本地模型（离线部署用）
+      - chroma_data:/app/chroma_data            # Chroma 向量数据持久化
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    depends_on:
-      milvus:
-        condition: service_healthy
     environment:
-      MILVUS_HOST: milvus
-      MILVUS_PORT: "19530"
       LLM_BASE_URL: http://host.docker.internal:8001/v1
       DATABASE_URL: postgresql://postgres:${DB_PASSWORD}@postgres:5432/blog
       EMBEDDING_MODEL: ${EMBEDDING_MODEL:-/app/models/bge-small-zh}
+      CHROMA_PERSIST_PATH: /app/chroma_data
     mem_limit: 512m
     healthcheck:
       test: python -c "import urllib.request; exit(0 if urllib.request.urlopen('http://localhost:8002/health').status == 200 else 1)" || exit 1
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s
+      start_period: 60s
 
 volumes:
   postgres_data:
-  milvus_data:
+  chroma_data:

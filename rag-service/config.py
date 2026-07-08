@@ -10,10 +10,9 @@ class Settings:
   host: str = "0.0.0.0"
   port: int = 8002
 
-  # Milvus
-  milvus_host: str = "localhost"
-  milvus_port: int = 19530
-  milvus_collection: str = "blog_knowledge"
+  # Chroma（进程内向量数据库，数据持久化到本地磁盘）
+  chroma_persist_path: str = "./chroma_data"
+  chroma_collection: str = "blog_knowledge"
 
   # Embedding — EMBEDDING_MODEL 可设为模型名（需联网）或本地路径
   # 国内服务器用法: EMBEDDING_MODEL=/app/models/bge-small-zh

@@ -11,7 +11,8 @@ logger = logging.getLogger("rag.llm_client")
 
 
 class LlmClient:
-    def __init__(self):
+    def __init__(self, base_url: str | None = None):
+        self._base_url = (base_url or settings.llm_base_url).rstrip("/")
         self._timeout = httpx.Timeout(settings.llm_timeout)
         self._client = httpx.AsyncClient(timeout=self._timeout)
 
@@ -40,7 +41,7 @@ class LlmClient:
         start = time.monotonic()
         try:
             resp = await self._client.post(
-                f"{settings.llm_base_url}/chat/completions",
+                f"{self._base_url}/chat/completions",
                 json=payload,
             )
             elapsed = time.monotonic() - start

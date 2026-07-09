@@ -79,15 +79,18 @@ class RagPipeline:
         self, messages: List[ChatMessage], docs: List[dict]
     ) -> List[ChatMessage]:
         """将检索到的文档注入 system message 末尾。"""
-        # 构建上下文文本
-        context_parts = ["【参考知识，用来回答用户问题】：", "---"]
+        # 构建上下文文本——用强指令让小模型优先引用知识
+        context_parts = [
+            "【重要指令】你必须根据以下博客内容回答问题，不要编造：",
+            "---",
+        ]
         for i, doc in enumerate(docs, 1):
             source_label = "文章" if doc["source_type"] == "post" else "杂谈"
             context_parts.append(
-                f"片段{i}（来源：{source_label}《{doc['title']}》）：{doc['content']}"
+                f"片段{i}（{source_label}《{doc['title']}》）：{doc['content']}"
             )
         context_parts.append("---")
-        context_parts.append("请根据以上知识回答，如果知识不足以回答就说不知道。")
+        context_parts.append("规则：只回答这些内容里有的信息。不知道就说「我不太清楚」。禁止编造不存在的内容。")
         context_text = "\n".join(context_parts)
 
         # 复制消息列表，修改 system message

@@ -46,33 +46,42 @@ class RagPipeline:
         messages: List[ChatMessage],
         temperature: float = 0.7,
         max_tokens: int = 1024,
+        mode: str = "auto",
     ) -> ChatResponse:
-        """处理聊天请求：闲聊用角色 prompt，博客问题切换为知识助手 prompt。"""
+        """处理聊天请求。mode: auto(自动判断) | chat(角色模式) | knowledge(知识模式)。"""
         user_messages = [m for m in messages if m.role == "user"]
         if not user_messages:
             return await self._llm.chat(messages, temperature=temperature, max_tokens=max_tokens)
 
         last_user = user_messages[-1].content.strip()
 
-        # 闲聊 → 保持角色 system prompt 不变
-        if not _is_blog_question(last_user):
-            logger.info("Casual chat — keeping character prompt")
+        # 强制角色模式 — 跳过检索，保留角色 prompt
+        if mode == "chat":
+            logger.info("Chat mode (forced) — keeping character prompt")
             return await self._llm.chat(messages, temperature=temperature, max_tokens=max_tokens)
 
-        # 博客问题 → 检索 + 替换 system prompt 为知识助手模式
+        # 强制知识模式 — 始终检索
+        if mode == "knowledge":
+            logger.info("Knowledge mode (forced) — retrieving blog content")
+
+        # auto 模式 — 关键词自动判断
+        elif not _is_blog_question(last_user):
+            logger.info("Auto mode — casual chat, keeping character prompt")
+            return await self._llm.chat(messages, temperature=temperature, max_tokens=max_tokens)
+
+        # 检索 + 替换 system prompt 为知识助手模式
         try:
             vector = self._embedding.encode([last_user])[0]
             docs = self._retriever.search(vector)
             logger.info(
-                "Retrieval — query=%.100s results=%d scores=%s",
-                last_user, len(docs),
+                "Retrieval — query=%.100s mode=%s results=%d scores=%s",
+                last_user, mode, len(docs),
                 [f"{d.get('score', 0):.4f}" for d in docs],
             )
         except Exception as e:
             logger.warning("Retrieval failed (%s: %s) — falling back to bare chat", type(e).__name__, e)
             return await self._llm.chat(messages, temperature=temperature, max_tokens=max_tokens)
 
-        # 有知识 → 替换 system prompt（去掉角色人设，纯知识助手）
         if docs:
             augmented = self._inject_context(messages, docs)
         else:

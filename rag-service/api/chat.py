@@ -38,11 +38,12 @@ async def chat_completions(request: ChatRequest):
             request.messages,
             temperature=request.temperature,
             max_tokens=request.max_tokens,
+            mode=request.mode or "auto",
         )
         elapsed = time.monotonic() - start
         logger.info(
-            "Request completed — messages=%d temperature=%.2f max_tokens=%d elapsed=%.2fs",
-            len(request.messages), request.temperature, request.max_tokens, elapsed,
+            "Request completed — messages=%d mode=%s temperature=%.2f max_tokens=%d elapsed=%.2fs",
+            len(request.messages), request.mode, request.temperature, request.max_tokens, elapsed,
         )
         return response
     except Exception as e:

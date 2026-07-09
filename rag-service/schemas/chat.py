@@ -13,6 +13,7 @@ class ChatRequest(BaseModel):
     messages: List[ChatMessage] = Field(..., min_length=1, description="对话历史")
     temperature: Optional[float] = Field(0.7, ge=0.0, le=2.0)
     max_tokens: Optional[int] = Field(1024, ge=1, le=4096)
+    mode: Optional[str] = Field("auto", description="auto | chat | knowledge")
 
 
 class ChatChoice(BaseModel):

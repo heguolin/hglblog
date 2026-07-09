@@ -26,6 +26,7 @@ class Settings:
 
   # 模型服务
   llm_base_url: str = "http://127.0.0.1:8001/v1"
+  rag_llm_base_url: str = "http://127.0.0.1:8003/v1"  # 基座模型（RAG 知识问答）
   llm_timeout: int = 30
 
   # 降级回复（流萤语气，不暴露技术细节）

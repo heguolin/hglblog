@@ -10,6 +10,25 @@ from config import settings
 
 logger = logging.getLogger("rag.pipeline")
 
+# 博客知识类关键词 — 命中则走 RAG，否则纯角色聊天
+BLOG_KEYWORDS = [
+    "博客", "文章", "写过", "写了", "发布", "发表的", "写过什么",
+    "网站", "网页", "杂谈", "相册", "照片", "友链", "关于",
+    "有什么", "介绍", "内容", "写过哪些", "写过什么",
+    "写了什么", "写了哪些", "什么文章", "哪些文章", "什么内容",
+    "技术", "代码", "编程", "AI", "大模型", "模型",
+    "部署", "Docker", "服务器", "后端", "前端", "项目",
+    "你和博客", "博客里", "博主", "站长", "管理员",
+]
+
+
+def _is_blog_question(text: str) -> bool:
+    """判断是否在问博客相关内容。"""
+    for kw in BLOG_KEYWORDS:
+        if kw in text:
+            return True
+    return False
+
 
 class RagPipeline:
     def __init__(
@@ -28,29 +47,19 @@ class RagPipeline:
         temperature: float = 0.7,
         max_tokens: int = 1024,
     ) -> ChatResponse:
-        """处理聊天请求：检索知识 → 注入上下文 → 调用模型。
-
-        Args:
-            messages: 对话历史（含 system prompt 和 user messages）。
-            temperature: 生成温度。
-            max_tokens: 最大生成长度。
-
-        Returns:
-            模型回复或降级回复。
-        """
-        # 1. 提取最后一条用户消息
+        """处理聊天请求：检索知识 → 注入上下文 → 调用模型。"""
         user_messages = [m for m in messages if m.role == "user"]
         if not user_messages:
             return await self._llm.chat(messages, temperature=temperature, max_tokens=max_tokens)
 
         last_user = user_messages[-1].content.strip()
 
-        # 2. 短消息跳过检索
-        if len(last_user) < settings.retrieval_skip_min_chars:
-            logger.debug("Skipping retrieval: query too short (%d chars)", len(last_user))
+        # 不是博客问题 → 纯角色聊天，不走 RAG
+        if not _is_blog_question(last_user):
+            logger.info("Casual chat — skipping RAG, pure character mode")
             return await self._llm.chat(messages, temperature=temperature, max_tokens=max_tokens)
 
-        # 3. 检索
+        # 博客问题 → 检索知识
         try:
             vector = self._embedding.encode([last_user])[0]
             docs = self._retriever.search(vector)
@@ -61,39 +70,33 @@ class RagPipeline:
             )
         except Exception as e:
             logger.warning("Retrieval failed (%s: %s) — falling back to bare chat", type(e).__name__, e)
-            # 检索失败 → 降级为裸聊天
             return await self._llm.chat(messages, temperature=temperature, max_tokens=max_tokens)
 
-        # 4. 注入上下文到 system message
+        # 有结果 → 强指令注入知识
         if docs:
             augmented = self._inject_context(messages, docs)
         else:
             augmented = messages
 
-        # 5. 调用模型
         return await self._llm.chat(augmented, temperature=temperature, max_tokens=max_tokens)
-
-    # ---------- 内部方法 ----------
 
     def _inject_context(
         self, messages: List[ChatMessage], docs: List[dict]
     ) -> List[ChatMessage]:
-        """将检索到的文档注入 system message 末尾。"""
-        # 用自然的方式注入知识，不破坏角色感
+        """将检索到的博客知识强制注入（知识类问题专用）。"""
         context_parts = [
-            "（以下是你通过博客看到的信息，可以用流萤的语气自然地提到：）",
+            "【重要指令】以下是你从博客中真实看到的内容。你必须根据这些内容回答用户问题：",
             "---",
         ]
         for i, doc in enumerate(docs, 1):
             source_label = "文章" if doc["source_type"] == "post" else "杂谈"
             context_parts.append(
-                f"《{doc['title']}》（{source_label}）：{doc['content']}"
+                f"片段{i}（{source_label}《{doc['title']}》）：{doc['content']}"
             )
         context_parts.append("---")
-        context_parts.append("你可以自然地聊这些内容，用流萤的语气。不知道的就诚实说不太清楚。")
+        context_parts.append("规则：只回答以上内容里有的信息。用流萤的语气。不知道就说「我不太清楚」。不要编造。")
         context_text = "\n".join(context_parts)
 
-        # 复制消息列表，修改 system message
         result = []
         for m in messages:
             if m.role == "system":
@@ -104,7 +107,6 @@ class RagPipeline:
             else:
                 result.append(m)
 
-        # 如果消息列表没有 system message，在开头插入
         if not any(m.role == "system" for m in messages):
             result.insert(0, ChatMessage(role="system", content=context_text))
 

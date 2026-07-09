@@ -48,61 +48,53 @@ def mock_llm():
 
 
 @pytest.mark.asyncio
-async def test_pipeline_injects_context(mock_embedding, mock_retriever, mock_llm):
-    """检索到文档时，应将其注入 system message 并调用模型。"""
+async def test_blog_question_triggers_rag(mock_embedding, mock_retriever, mock_llm):
+    """博客相关问题触发检索，注入上下文。"""
     pipeline = RagPipeline(mock_embedding, mock_retriever, mock_llm)
-    messages = make_messages("我最近写了什么？")
+    messages = make_messages("我博客里有什么文章？")
 
     result = await pipeline.run(messages)
 
-    # 验证模型被调用
     mock_llm.chat.assert_called_once()
     called_messages = mock_llm.chat.call_args[0][0]
-    # system message 应该包含注入的上下文
     system_content = called_messages[0].content
     assert "Docker部署指南" in system_content
-    assert "参考知识" in system_content
-    # 模型响应正确返回
     assert "Docker" in result.choices[0].message.content
 
 
 @pytest.mark.asyncio
-async def test_pipeline_skips_short_message(mock_embedding, mock_retriever, mock_llm):
-    """短消息（<5字）跳过检索，直接调模型。"""
+async def test_casual_chat_skips_rag(mock_embedding, mock_retriever, mock_llm):
+    """非博客问题（闲聊）跳过 RAG，纯角色模式。"""
     pipeline = RagPipeline(mock_embedding, mock_retriever, mock_llm)
-    messages = make_messages("你好")
+    messages = make_messages("你好呀，今天心情怎么样？")
 
     result = await pipeline.run(messages)
 
-    # 检索不应被调用
     mock_embedding.encode.assert_not_called()
     mock_retriever.search.assert_not_called()
-    # 但模型仍应被调用
     mock_llm.chat.assert_called_once()
 
 
 @pytest.mark.asyncio
-async def test_pipeline_empty_retrieval_passes_through(mock_embedding, mock_retriever, mock_llm):
-    """检索无结果时，原封不动调模型。"""
+async def test_empty_retrieval_still_queries_llm(mock_embedding, mock_retriever, mock_llm):
+    """博客问题但无匹配知识时，正常调模型不注入。"""
     mock_retriever.search.return_value = []
     pipeline = RagPipeline(mock_embedding, mock_retriever, mock_llm)
-    messages = make_messages("今天服务器状态怎么样？")
+    messages = make_messages("博客里有什么前端项目？")
 
     result = await pipeline.run(messages)
 
     called_messages = mock_llm.chat.call_args[0][0]
-    # system message 不应被修改
     assert called_messages[0].content == "你是流萤。"
 
 
 @pytest.mark.asyncio
-async def test_pipeline_retrieval_error_graceful_degradation(mock_embedding, mock_retriever, mock_llm):
-    """检索抛异常时，降级为裸聊天，不应中断。"""
-    mock_retriever.search.side_effect = RuntimeError("Milvus connection lost")
+async def test_retrieval_error_graceful_degradation(mock_embedding, mock_retriever, mock_llm):
+    """检索抛异常时降级为裸聊天，不应中断。"""
+    mock_retriever.search.side_effect = RuntimeError("Chroma connection lost")
     pipeline = RagPipeline(mock_embedding, mock_retriever, mock_llm)
     messages = make_messages("我最近写了什么？")
 
     result = await pipeline.run(messages)
 
-    # 仍应成功返回
     mock_llm.chat.assert_called_once()

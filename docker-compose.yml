@@ -51,7 +51,7 @@ services:
       DATABASE_URL: postgresql://postgres:${DB_PASSWORD}@postgres:5432/blog
       EMBEDDING_MODEL: ${EMBEDDING_MODEL:-/app/models/bge-small-zh}
       CHROMA_PERSIST_PATH: /app/chroma_data
-    mem_limit: 512m
+    mem_limit: 768m
     healthcheck:
       test: python -c "import urllib.request; exit(0 if urllib.request.urlopen('http://localhost:8002/health').status == 200 else 1)" || exit 1
       interval: 30s

@@ -86,7 +86,7 @@ async def run_full(recreate: bool = False, embedding: Optional[EmbeddingService]
     items = await fetch_posts(pg) + await fetch_chatters(pg)
     logger.info("Found %d items to index.", len(items))
 
-    batch_size = 32
+    batch_size = 4  # 低内存模式，batch 太大会 OOM
     total_chunks = 0
     for i in range(0, len(items), batch_size):
         batch = items[i : i + batch_size]

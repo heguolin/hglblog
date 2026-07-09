@@ -35,11 +35,13 @@ class RagPipeline:
         self,
         embedding: EmbeddingService,
         retriever: Retriever,
-        llm: LlmClient,
+        chat_llm: LlmClient,
+        rag_llm: LlmClient,
     ):
         self._embedding = embedding
         self._retriever = retriever
-        self._llm = llm
+        self._chat_llm = chat_llm   # 角色聊天 :8001
+        self._rag_llm = rag_llm     # 知识问答 :8003
 
     async def run(
         self,
@@ -47,19 +49,19 @@ class RagPipeline:
         temperature: float = 0.7,
         max_tokens: int = 1024,
     ) -> ChatResponse:
-        """处理聊天请求：检索知识 → 注入上下文 → 调用模型。"""
+        """处理聊天请求：根据意图路由到角色模型或基座模型。"""
         user_messages = [m for m in messages if m.role == "user"]
         if not user_messages:
-            return await self._llm.chat(messages, temperature=temperature, max_tokens=max_tokens)
+            return await self._chat_llm.chat(messages, temperature=temperature, max_tokens=max_tokens)
 
         last_user = user_messages[-1].content.strip()
 
-        # 不是博客问题 → 纯角色聊天，不走 RAG
+        # 闲聊 → 角色模型
         if not _is_blog_question(last_user):
-            logger.info("Casual chat — skipping RAG, pure character mode")
-            return await self._llm.chat(messages, temperature=temperature, max_tokens=max_tokens)
+            logger.info("Casual chat — routing to character model")
+            return await self._chat_llm.chat(messages, temperature=temperature, max_tokens=max_tokens)
 
-        # 博客问题 → 检索知识
+        # 博客问题 → 检索 + 基座模型
         try:
             vector = self._embedding.encode([last_user])[0]
             docs = self._retriever.search(vector)
@@ -70,22 +72,21 @@ class RagPipeline:
             )
         except Exception as e:
             logger.warning("Retrieval failed (%s: %s) — falling back to bare chat", type(e).__name__, e)
-            return await self._llm.chat(messages, temperature=temperature, max_tokens=max_tokens)
+            return await self._rag_llm.chat(messages, temperature=temperature, max_tokens=max_tokens)
 
         # 有结果 → 强指令注入知识
         if docs:
             augmented = self._inject_context(messages, docs)
+            return await self._rag_llm.chat(augmented, temperature=temperature, max_tokens=max_tokens)
         else:
-            augmented = messages
-
-        return await self._llm.chat(augmented, temperature=temperature, max_tokens=max_tokens)
+            return await self._rag_llm.chat(messages, temperature=temperature, max_tokens=max_tokens)
 
     def _inject_context(
         self, messages: List[ChatMessage], docs: List[dict]
     ) -> List[ChatMessage]:
         """将检索到的博客知识强制注入（知识类问题专用）。"""
         context_parts = [
-            "【重要指令】以下是你从博客中真实看到的内容。你必须根据这些内容回答用户问题：",
+            "【指令】根据以下博客内容回答用户问题。只回答内容里有的信息，不知道就说不知道。",
             "---",
         ]
         for i, doc in enumerate(docs, 1):
@@ -94,7 +95,6 @@ class RagPipeline:
                 f"片段{i}（{source_label}《{doc['title']}》）：{doc['content']}"
             )
         context_parts.append("---")
-        context_parts.append("规则：只回答以上内容里有的信息。用流萤的语气。不知道就说「我不太清楚」。不要编造。")
         context_text = "\n".join(context_parts)
 
         result = []

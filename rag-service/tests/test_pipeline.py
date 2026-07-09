@@ -47,54 +47,66 @@ def mock_llm():
     return mock
 
 
+@pytest.fixture
+def mock_rag_llm():
+    mock = AsyncMock()
+    mock.chat.return_value = ChatResponse(
+        choices=[{"index": 0, "message": {"role": "assistant", "content": "博客里共有7篇文章：Docker部署指南、NestJS笔记…"}}]
+    )
+    return mock
+
+
 @pytest.mark.asyncio
-async def test_blog_question_triggers_rag(mock_embedding, mock_retriever, mock_llm):
-    """博客相关问题触发检索，注入上下文。"""
-    pipeline = RagPipeline(mock_embedding, mock_retriever, mock_llm)
-    messages = make_messages("我博客里有什么文章？")
+async def test_blog_question_uses_rag_model(mock_embedding, mock_retriever, mock_llm, mock_rag_llm):
+    """博客问题应走基座模型，注入检索知识。"""
+    pipeline = RagPipeline(mock_embedding, mock_retriever, mock_llm, mock_rag_llm)
+    messages = make_messages("我的博客里有什么文章？")
 
     result = await pipeline.run(messages)
 
-    mock_llm.chat.assert_called_once()
-    called_messages = mock_llm.chat.call_args[0][0]
+    # 基座模型被调用
+    mock_rag_llm.chat.assert_called_once()
+    # 角色模型未被调用
+    mock_llm.chat.assert_not_called()
+    # 检索知识已注入
+    called_messages = mock_rag_llm.chat.call_args[0][0]
     system_content = called_messages[0].content
     assert "Docker部署指南" in system_content
-    assert "Docker" in result.choices[0].message.content
 
 
 @pytest.mark.asyncio
-async def test_casual_chat_skips_rag(mock_embedding, mock_retriever, mock_llm):
-    """非博客问题（闲聊）跳过 RAG，纯角色模式。"""
-    pipeline = RagPipeline(mock_embedding, mock_retriever, mock_llm)
+async def test_casual_chat_uses_chat_model(mock_embedding, mock_retriever, mock_llm, mock_rag_llm):
+    """闲聊应走角色模型，不检索。"""
+    pipeline = RagPipeline(mock_embedding, mock_retriever, mock_llm, mock_rag_llm)
     messages = make_messages("你好呀，今天心情怎么样？")
 
     result = await pipeline.run(messages)
 
-    mock_embedding.encode.assert_not_called()
-    mock_retriever.search.assert_not_called()
     mock_llm.chat.assert_called_once()
+    mock_rag_llm.chat.assert_not_called()
+    mock_embedding.encode.assert_not_called()
 
 
 @pytest.mark.asyncio
-async def test_empty_retrieval_still_queries_llm(mock_embedding, mock_retriever, mock_llm):
+async def test_empty_retrieval_still_queries_llm(mock_embedding, mock_retriever, mock_llm, mock_rag_llm):
     """博客问题但无匹配知识时，正常调模型不注入。"""
     mock_retriever.search.return_value = []
-    pipeline = RagPipeline(mock_embedding, mock_retriever, mock_llm)
+    pipeline = RagPipeline(mock_embedding, mock_retriever, mock_llm, mock_rag_llm)
     messages = make_messages("博客里有什么前端项目？")
 
     result = await pipeline.run(messages)
 
-    called_messages = mock_llm.chat.call_args[0][0]
+    called_messages = mock_rag_llm.chat.call_args[0][0]
     assert called_messages[0].content == "你是流萤。"
 
 
 @pytest.mark.asyncio
-async def test_retrieval_error_graceful_degradation(mock_embedding, mock_retriever, mock_llm):
+async def test_retrieval_error_graceful_degradation(mock_embedding, mock_retriever, mock_llm, mock_rag_llm):
     """检索抛异常时降级为裸聊天，不应中断。"""
     mock_retriever.search.side_effect = RuntimeError("Chroma connection lost")
-    pipeline = RagPipeline(mock_embedding, mock_retriever, mock_llm)
+    pipeline = RagPipeline(mock_embedding, mock_retriever, mock_llm, mock_rag_llm)
     messages = make_messages("我最近写了什么？")
 
     result = await pipeline.run(messages)
 
-    mock_llm.chat.assert_called_once()
+    mock_rag_llm.chat.assert_called_once()

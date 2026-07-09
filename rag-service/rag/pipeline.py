@@ -35,13 +35,11 @@ class RagPipeline:
         self,
         embedding: EmbeddingService,
         retriever: Retriever,
-        chat_llm: LlmClient,
-        rag_llm: LlmClient,
+        llm: LlmClient,
     ):
         self._embedding = embedding
         self._retriever = retriever
-        self._chat_llm = chat_llm   # 角色聊天 :8001
-        self._rag_llm = rag_llm     # 知识问答 :8003
+        self._llm = llm
 
     async def run(
         self,
@@ -49,19 +47,19 @@ class RagPipeline:
         temperature: float = 0.7,
         max_tokens: int = 1024,
     ) -> ChatResponse:
-        """处理聊天请求：根据意图路由到角色模型或基座模型。"""
+        """处理聊天请求：闲聊用角色 prompt，博客问题切换为知识助手 prompt。"""
         user_messages = [m for m in messages if m.role == "user"]
         if not user_messages:
-            return await self._chat_llm.chat(messages, temperature=temperature, max_tokens=max_tokens)
+            return await self._llm.chat(messages, temperature=temperature, max_tokens=max_tokens)
 
         last_user = user_messages[-1].content.strip()
 
-        # 闲聊 → 角色模型
+        # 闲聊 → 保持角色 system prompt 不变
         if not _is_blog_question(last_user):
-            logger.info("Casual chat — routing to character model")
-            return await self._chat_llm.chat(messages, temperature=temperature, max_tokens=max_tokens)
+            logger.info("Casual chat — keeping character prompt")
+            return await self._llm.chat(messages, temperature=temperature, max_tokens=max_tokens)
 
-        # 博客问题 → 检索 + 基座模型
+        # 博客问题 → 检索 + 替换 system prompt 为知识助手模式
         try:
             vector = self._embedding.encode([last_user])[0]
             docs = self._retriever.search(vector)
@@ -72,42 +70,51 @@ class RagPipeline:
             )
         except Exception as e:
             logger.warning("Retrieval failed (%s: %s) — falling back to bare chat", type(e).__name__, e)
-            return await self._rag_llm.chat(messages, temperature=temperature, max_tokens=max_tokens)
+            return await self._llm.chat(messages, temperature=temperature, max_tokens=max_tokens)
 
-        # 有结果 → 强指令注入知识
+        # 有知识 → 替换 system prompt（去掉角色人设，纯知识助手）
         if docs:
             augmented = self._inject_context(messages, docs)
-            return await self._rag_llm.chat(augmented, temperature=temperature, max_tokens=max_tokens)
         else:
-            return await self._rag_llm.chat(messages, temperature=temperature, max_tokens=max_tokens)
+            augmented = messages
+
+        return await self._llm.chat(augmented, temperature=temperature, max_tokens=max_tokens)
 
     def _inject_context(
         self, messages: List[ChatMessage], docs: List[dict]
     ) -> List[ChatMessage]:
-        """将检索到的博客知识强制注入（知识类问题专用）。"""
-        context_parts = [
-            "【指令】根据以下博客内容回答用户问题。只回答内容里有的信息，不知道就说不知道。",
-            "---",
-        ]
+        """博客问题：替换 system prompt 为纯知识助手模式，去掉角色人设。"""
+        # 构建知识片段
+        fragments = []
         for i, doc in enumerate(docs, 1):
             source_label = "文章" if doc["source_type"] == "post" else "杂谈"
-            context_parts.append(
-                f"片段{i}（{source_label}《{doc['title']}》）：{doc['content']}"
+            fragments.append(
+                f"{i}. [{source_label}《{doc['title']}》] {doc['content']}"
             )
-        context_parts.append("---")
-        context_text = "\n".join(context_parts)
 
+        # 纯知识助手 prompt（无角色设定，强制引用知识）
+        knowledge_system = (
+            "你是一个准确的知识助手。你的任务是根据以下内容回答用户问题。\n"
+            "规则：\n"
+            "1. 只回答以下内容中有的信息，不要编造\n"
+            "2. 如果内容不足以回答，直接说「没有找到相关信息」\n"
+            "3. 回答要简洁、准确\n\n"
+            "---博客内容---\n"
+            + "\n".join(fragments) +
+            "\n---"
+        )
+
+        # 替换现有 system message，或插入新的
         result = []
+        replaced = False
         for m in messages:
             if m.role == "system":
-                result.append(ChatMessage(
-                    role="system",
-                    content=f"{m.content}\n\n{context_text}",
-                ))
+                result.append(ChatMessage(role="system", content=knowledge_system))
+                replaced = True
             else:
                 result.append(m)
 
-        if not any(m.role == "system" for m in messages):
-            result.insert(0, ChatMessage(role="system", content=context_text))
+        if not replaced:
+            result.insert(0, ChatMessage(role="system", content=knowledge_system))
 
         return result

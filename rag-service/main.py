@@ -41,9 +41,8 @@ async def lifespan(app: FastAPI):
     retriever.create_collection(drop_existing=False)
     logger.info("Chroma ready (data: %s).", settings.chroma_persist_path)
 
-    chat_llm = LlmClient()  # :8001 角色模型
-    rag_llm = LlmClient(base_url=settings.rag_llm_base_url)  # :8003 基座模型
-    pipeline = RagPipeline(embedding, retriever, chat_llm, rag_llm)
+    llm = LlmClient()
+    pipeline = RagPipeline(embedding, retriever, llm)
     set_pipeline(pipeline)
     logger.info("Pipeline ready, listening on port %d", settings.port)
 

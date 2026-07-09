@@ -83,15 +83,30 @@ async def test_casual_chat_keeps_character_prompt(mock_embedding, mock_retriever
 
 @pytest.mark.asyncio
 async def test_empty_retrieval_passes_through(mock_embedding, mock_retriever, mock_llm):
-    """博客问题但无匹配知识时，正常调模型不替换 prompt。"""
+    """auto 模式下无匹配知识时，正常调模型不替换 prompt。"""
     mock_retriever.search.return_value = []
     pipeline = RagPipeline(mock_embedding, mock_retriever, mock_llm)
     messages = make_messages("博客里有什么前端项目？")
 
-    await pipeline.run(messages)
+    await pipeline.run(messages, mode="auto")
 
     called_messages = mock_llm.chat.call_args[0][0]
     assert called_messages[0].content == "你是流萤。"
+
+
+@pytest.mark.asyncio
+async def test_knowledge_mode_empty_returns_not_found(mock_embedding, mock_retriever, mock_llm):
+    """knowledge 模式下无匹配知识时，直接返回「没找到」，不调模型。"""
+    mock_retriever.search.return_value = []
+    pipeline = RagPipeline(mock_embedding, mock_retriever, mock_llm)
+    messages = make_messages("博客里有什么前端项目？")
+
+    result = await pipeline.run(messages, mode="knowledge")
+
+    # 不应调模型
+    mock_llm.chat.assert_not_called()
+    # 直接返回 hardcoded 降级回复
+    assert "没有和这个相关" in result.choices[0].message.content
 
 
 @pytest.mark.asyncio

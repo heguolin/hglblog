@@ -82,11 +82,16 @@ class RagPipeline:
             logger.warning("Retrieval failed (%s: %s) — falling back to bare chat", type(e).__name__, e)
             return await self._llm.chat(messages, temperature=temperature, max_tokens=max_tokens)
 
-        if docs:
-            augmented = self._inject_context(messages, docs)
-        else:
-            augmented = messages
+        # 无结果处理
+        if not docs:
+            if mode == "knowledge":
+                logger.info("Knowledge mode — no relevant content found, returning hard not-found")
+                return ChatResponse(
+                    choices=[{"index": 0, "message": {"role": "assistant", "content": "唔…博客里好像没有和这个相关的内容。要不要换个问题试试？"}}]
+                )
+            return await self._llm.chat(messages, temperature=temperature, max_tokens=max_tokens)
 
+        augmented = self._inject_context(messages, docs)
         return await self._llm.chat(augmented, temperature=temperature, max_tokens=max_tokens)
 
     def _inject_context(

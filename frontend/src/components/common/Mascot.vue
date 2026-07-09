@@ -238,14 +238,14 @@ function onChatKeydown(e: KeyboardEvent) {
   flex-direction: column;
   overflow: hidden;
   border-radius: 18px;
-  background: rgba(255, 248, 240, 0.06);
+  background:
+    radial-gradient(ellipse at top, rgba(15, 12, 41, 0.65) 0%, rgba(15, 12, 41, 0.82) 100%);
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   border: 1px solid rgba(255, 248, 240, 0.12);
   box-shadow:
-    0 0 0 1px rgba(255, 248, 240, 0.08),
-    0 24px 48px -12px rgba(0, 0, 0, 0.5),
-    0 0 0 1px rgba(192, 132, 252, 0.05) inset;
+    0 0 0 1px rgba(255, 248, 240, 0.06),
+    0 24px 48px -12px rgba(0, 0, 0, 0.5);
 }
 
 /* ====== Header ====== */
@@ -340,10 +340,10 @@ function onChatKeydown(e: KeyboardEvent) {
 }
 
 .msg-assistant {
-  background: rgba(255, 248, 240, 0.06);
-  color: rgba(255, 248, 240, 0.82);
+  background: rgba(255, 248, 240, 0.08);
+  color: rgba(255, 248, 240, 0.88);
   border-bottom-left-radius: 6px;
-  border: 1px solid rgba(255, 248, 240, 0.06);
+  border: 1px solid rgba(255, 248, 240, 0.08);
 }
 
 /* ====== Typing dots ====== */
@@ -368,7 +368,7 @@ function onChatKeydown(e: KeyboardEvent) {
   padding: 12px 16px;
   border-top: 1px solid rgba(255, 248, 240, 0.08);
   flex-shrink: 0;
-  background: rgba(15, 12, 41, 0.5);
+  background: rgba(15, 12, 41, 0.35);
 }
 
 .chat-input-field {

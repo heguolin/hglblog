@@ -82,7 +82,7 @@ class RagPipeline:
             logger.warning("Retrieval failed (%s: %s) — falling back to bare chat", type(e).__name__, e)
             return await self._llm.chat(messages, temperature=temperature, max_tokens=max_tokens)
 
-        # 无结果处理
+        # 无结果
         if not docs:
             if mode == "knowledge":
                 logger.info("Knowledge mode — no relevant content found, returning hard not-found")
@@ -91,19 +91,19 @@ class RagPipeline:
                 )
             return await self._llm.chat(messages, temperature=temperature, max_tokens=max_tokens)
 
+        # 知识模式：直接返回检索片段，不调模型（零幻觉）
+        if mode == "knowledge":
+            parts = ["在博客里找到了这些相关内容：\n"]
+            for doc in docs[:3]:
+                label = "文章" if doc["source_type"] == "post" else "杂谈"
+                parts.append(f"—— {label}《{doc['title']}》——\n{doc['content']}")
+            return ChatResponse(
+                choices=[{"index": 0, "message": {"role": "assistant", "content": "\n\n".join(parts)}}]
+            )
+
+        # auto 模式：注入上下文 + 调模型
         augmented = self._inject_context(messages, docs)
-        response = await self._llm.chat(augmented, temperature=temperature, max_tokens=max_tokens)
-
-        # 后处理：模型输出"找不到"时替换为用户友好降级回复
-        if response.choices:
-            text = response.choices[0].message.content.strip()
-            if text in ("找不到", "找不到。", "找不到…"):
-                logger.info("Knowledge mode — model returned '找不到', replacing with friendly not-found")
-                return ChatResponse(
-                    choices=[{"index": 0, "message": {"role": "assistant", "content": "唔…博客里好像没有和这个相关的内容。要不要换个问题试试？"}}]
-                )
-
-        return response
+        return await self._llm.chat(augmented, temperature=temperature, max_tokens=max_tokens)
 
     def _inject_context(
         self, messages: List[ChatMessage], docs: List[dict]

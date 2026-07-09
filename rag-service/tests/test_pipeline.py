@@ -103,10 +103,24 @@ async def test_knowledge_mode_empty_returns_not_found(mock_embedding, mock_retri
 
     result = await pipeline.run(messages, mode="knowledge")
 
-    # 不应调模型
     mock_llm.chat.assert_not_called()
-    # 直接返回 hardcoded 降级回复
     assert "没有和这个相关" in result.choices[0].message.content
+
+
+@pytest.mark.asyncio
+async def test_knowledge_mode_returns_chunks_directly(mock_embedding, mock_retriever, mock_llm):
+    """knowledge 模式下有结果时，直接返回检索片段，不调模型。"""
+    pipeline = RagPipeline(mock_embedding, mock_retriever, mock_llm)
+    messages = make_messages("Claude Code 怎么快速上手？")
+
+    result = await pipeline.run(messages, mode="knowledge")
+
+    # 不调模型
+    mock_llm.chat.assert_not_called()
+    # 直接返回检索片段
+    content = result.choices[0].message.content
+    assert "在博客里找到了这些相关内容" in content
+    assert "Docker部署指南" in content
 
 
 @pytest.mark.asyncio

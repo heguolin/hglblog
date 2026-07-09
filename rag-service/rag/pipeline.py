@@ -92,7 +92,18 @@ class RagPipeline:
             return await self._llm.chat(messages, temperature=temperature, max_tokens=max_tokens)
 
         augmented = self._inject_context(messages, docs)
-        return await self._llm.chat(augmented, temperature=temperature, max_tokens=max_tokens)
+        response = await self._llm.chat(augmented, temperature=temperature, max_tokens=max_tokens)
+
+        # 后处理：模型输出"找不到"时替换为用户友好降级回复
+        if response.choices:
+            text = response.choices[0].message.content.strip()
+            if text in ("找不到", "找不到。", "找不到…"):
+                logger.info("Knowledge mode — model returned '找不到', replacing with friendly not-found")
+                return ChatResponse(
+                    choices=[{"index": 0, "message": {"role": "assistant", "content": "唔…博客里好像没有和这个相关的内容。要不要换个问题试试？"}}]
+                )
+
+        return response
 
     def _inject_context(
         self, messages: List[ChatMessage], docs: List[dict]
@@ -106,13 +117,16 @@ class RagPipeline:
                 f"{i}. [{source_label}《{doc['title']}》] {doc['content']}"
             )
 
-        # 纯知识助手 prompt（无角色设定，强制引用知识）
+        # 强约束 prompt：微调模型需要极简指令 + 示例才能不编造
         knowledge_system = (
-            "你是一个准确的知识助手。你的任务是根据以下内容回答用户问题。\n"
+            "你是博客内容搜索工具。你只能输出以下内容里有的信息。\n\n"
             "规则：\n"
-            "1. 只回答以下内容中有的信息，不要编造\n"
-            "2. 如果内容不足以回答，直接说「没有找到相关信息」\n"
-            "3. 回答要简洁、准确\n\n"
+            "1. 只引用下面「博客内容」里的信息回答\n"
+            "2. 如果找不到答案，只回复三个字：找不到\n"
+            "3. 禁止编造、禁止角色扮演、禁止补充解释\n\n"
+            "示例：\n"
+            "用户问「博客技术栈」→ 博客内容里有「前端Vue后端NestJS」→ 回答：前端Vue后端NestJS\n"
+            "用户问「今天天气」→ 博客内容里没有 → 回答：找不到\n\n"
             "---博客内容---\n"
             + "\n".join(fragments) +
             "\n---"

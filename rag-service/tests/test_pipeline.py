@@ -59,7 +59,7 @@ async def test_blog_question_replaces_system_prompt(mock_embedding, mock_retriev
     called_messages = mock_llm.chat.call_args[0][0]
     system_content = called_messages[0].content
     # 应包含知识助手 prompt（不含角色设定）
-    assert "知识助手" in system_content
+    assert "博客内容搜索工具" in system_content
     assert "Docker部署指南" in system_content
     # 不应包含角色人设
     assert "你是流萤" not in system_content
